@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+app/build/
+gradle-app.setting
+.gradletasknamecache
+
+# Local configuration — machine-specific SDK path, never shared
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Log/output from local testing
+*.log
+
+# macOS
+.DS_Store
+
+# Keystores — never commit signing keys
+*.jks
+*.keystore
