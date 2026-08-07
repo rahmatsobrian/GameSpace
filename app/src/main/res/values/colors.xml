@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Deep charcoal rather than flat #000 — reads as "systems tool", not a
+         plain black rectangle. Full AMOLED true-black is a toggle inside the
+         app (core/theme/Color.kt), not baked in here. -->
+    <color name="splash_background">#0B0D0E</color>
+
+    <color name="icon_background">#11151A</color>
+    <color name="icon_glyph">#5CE1E6</color>
+</resources>

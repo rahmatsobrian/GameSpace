@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Prompt chevron ">" -->
+    <path
+        android:strokeColor="@color/icon_glyph"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M40,34 L64,54 L40,74" />
+    <!-- Cursor dash, the "_" after the prompt -->
+    <path
+        android:strokeColor="@color/icon_glyph"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:pathData="M72,74 L86,74" />
+</vector>

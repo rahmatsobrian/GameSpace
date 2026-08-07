@@ -1,0 +1,147 @@
+# CI build for GameSpace.
+#
+# Why this workflow installs Gradle directly instead of just running
+# ./gradlew like a normal Android CI setup: this project was authored in a
+# sandboxed environment with no network access and no Android SDK, so
+# gradle/wrapper/gradle-wrapper.jar — a compiled binary, not something
+# that can be written as text — was never generated. Everything else
+# about the wrapper (gradlew, gradlew.bat, gradle-wrapper.properties) is
+# either real text this repo already has, or gets generated fresh below.
+#
+# The fix: install a specific Gradle version directly (gradle/actions/
+# setup-gradle's gradle-version input does this independent of any
+# wrapper), run `gradle wrapper` to generate a complete, correct wrapper
+# matching gradle-wrapper.properties, THEN switch to ./gradlew for the
+# actual build — which is what every subsequent step here does. Nothing
+# is committed back to the repo; the wrapper regenerates every run. That
+# trades a few seconds per run for never risking a stale or
+# wrong-version jar sitting in git — worth reconsidering if build times
+# become a real concern later.
+#
+# Action versions below (checkout@v6, setup-java@v5, setup-gradle@v6,
+# upload-artifact@v4) reflect what current docs showed at the time this
+# was written — action marketplace versions move fast enough that they're
+# worth a quick check against the marketplace if this workflow ever
+# starts failing at a setup step specifically, rather than a build step.
+#
+# gradle-wrapper.properties pins Gradle 8.13 as a safe pairing for AGP
+# 8.11 (gradle/libs.versions.toml) — Gradle tends to work fine with older
+# AGP versions than its own release, so newer-than-strictly-required is
+# the safer direction to round to. If setup-gradle's log shows AGP
+# rejecting this Gradle version as too old, that's the number to bump.
+
+name: Android CI Build
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_VERSION: '8.13'
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install Android SDK platform 36 and build-tools
+        # GitHub-hosted ubuntu-latest runners ship with Android SDK
+        # command-line tools (including sdkmanager) already on PATH — no
+        # separate SDK-setup action needed, just the specific platform/
+        # build-tools this project's compileSdk (36) targets. build-tools
+        # version below is a best guess (matching the platform number,
+        # the usual convention for a first release) — not independently
+        # confirmed, so if this step fails on a "package not found"
+        # error specifically, check `sdkmanager --list` output in the
+        # log for the exact available version string.
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle ${{ env.GRADLE_VERSION }}
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+
+      - name: Generate gradle-wrapper.jar
+        run: gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }} --stacktrace
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee build-output.log
+
+      - name: Run unit tests
+        if: always()
+        run: |
+          set -o pipefail
+          ./gradlew testDebugUnitTest --stacktrace 2>&1 | tee -a build-output.log
+
+      - name: Run lint
+        if: always()
+        run: |
+          set -o pipefail
+          ./gradlew lintDebug --stacktrace 2>&1 | tee -a build-output.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Build summary"
+            echo ""
+            echo "Full log: see the \`build-log\` artifact below."
+            echo ""
+            echo "### Last 40 log lines"
+            echo '```'
+            tail -n 40 build-output.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # if: always() on the three artifact uploads below is deliberate —
+      # the log and reports matter most exactly when the build failed,
+      # which is also the one case a plain "on success" upload would skip.
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build-output.log
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload lint and test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-reports
+          path: app/build/reports
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+          if-no-files-found: error

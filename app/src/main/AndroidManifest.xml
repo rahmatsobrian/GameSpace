@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Android 11+ package-visibility: without this, PackageManager silently
+         returns almost nothing for queryIntentActivities regardless of what
+         flags you pass — this is the fix, not a permission dialog. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <!-- Special AppOps-backed permission — this line alone grants nothing.
+         The user still has to flip it on manually via
+         Settings.ACTION_USAGE_ACCESS_SETTINGS (see core/usage). -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Overlay bubble (core/overlay, feature/overlay). Also grants
+         nothing by itself — same shape as usage access: the user flips it
+         on via ACTION_MANAGE_OVERLAY_PERMISSION. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Booster (core/settings, data/booster). Brightness only — DND uses
+         its own ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS flow, which
+         needs no manifest permission declaration at all. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!-- Quick toggles (data/quicktoggle) — read-only WiFi state check.
+         The actual on/off flip goes through the privilege layer's shell
+         (`svc wifi enable/disable`), which needs no app-level permission
+         of its own since the shell process carries its own capability. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:name=".SirohaGameSpaceApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.GameSpace.Splash"
+        android:supportsRtl="true"
+        android:enableOnBackInvokedCallback="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.GameSpace.Splash"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Shizuku binder hand-off. This provider does nothing by itself; it's
+          how the Shizuku app passes its privileged Binder to us once the user
+          has granted permission. authorities MUST stay tied to applicationId,
+          not the debug-suffixed one, so build ${applicationId} — don't hardcode it.
+        -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:multiprocess="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+        <!--
+          specialUse is the closest-fitting Android 14+ foreground service
+          type for "floating gameplay overlay" — none of the more specific
+          types (mediaPlayback, location, camera, etc.) actually describe
+          this. The <property> justification is required alongside it and
+          is what Play Console would review if this ever ships there.
+        -->
+        <service
+            android:name=".feature.overlay.OverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Floating in-game performance overlay the user explicitly starts and stops" />
+        </service>
+
+        <!--
+          System-bound automatically once the user grants "Notification
+          access" in Settings — this app never starts/stops it itself.
+        -->
+        <service
+            android:name=".feature.blocker.BlockerNotificationListenerService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!--
+          System-bound automatically once this app holds
+          RoleManager.ROLE_CALL_SCREENING — also never started/stopped
+          directly by this app.
+        -->
+        <service
+            android:name=".feature.blocker.BlockerCallScreeningService"
+            android:exported="true"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>

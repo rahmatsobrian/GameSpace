@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GameSpace</string>
+
+    <!-- System Access screen -->
+    <string name="system_access_title">Akses Sistem</string>
+    <string name="system_access_subtitle">Sebagian fitur (monitor performa game asli, kelola proses) butuh akses lebih dalam dari yang diizinkan Android ke aplikasi biasa. Ini opsional — aplikasi tetap jalan penuh tanpanya, hanya sebagian fitur yang jadi perkiraan alih-alih data langsung.</string>
+
+    <string name="privilege_root_title">Root</string>
+    <string name="privilege_root_desc">Lewat Magisk, KernelSU, atau APatch — cara paling dalam ke sistem.</string>
+    <string name="privilege_shizuku_title">Shizuku</string>
+    <string name="privilege_shizuku_desc">Akses setara ADB tanpa perlu unlock/root perangkat.</string>
+
+    <string name="state_unknown">Belum dicek</string>
+    <string name="state_checking">Mengecek…</string>
+    <string name="state_not_available">Tidak terdeteksi</string>
+    <string name="state_not_running">Terpasang, belum aktif</string>
+    <string name="state_permission_denied">Ditolak</string>
+    <string name="state_granted">Aktif</string>
+
+    <string name="action_request_root">Minta Akses Root</string>
+    <string name="action_open_shizuku">Buka Shizuku</string>
+    <string name="action_request_shizuku_permission">Minta Izin Shizuku</string>
+    <string name="action_install_shizuku">Shizuku Belum Terpasang</string>
+    <string name="action_recheck">Cek Ulang</string>
+    <string name="action_continue">Lanjut Tanpa Akses Tambahan</string>
+
+    <string name="active_tier_root">Mode aktif: Root</string>
+    <string name="active_tier_shizuku">Mode aktif: Shizuku</string>
+    <string name="active_tier_public">Mode aktif: API publik saja</string>
+
+    <!-- Home / library -->
+    <string name="home_search_hint">Cari game</string>
+    <string name="home_empty_title">Belum ada game</string>
+    <string name="home_empty_body">Scan otomatis belum nemu game, atau semuanya sudah dihapus dari daftar. Tambah manual kalau perlu.</string>
+    <string name="home_scan_cd">Scan ulang</string>
+    <string name="home_add_game_cd">Tambah game</string>
+    <string name="home_add_game_title">Tambah Game</string>
+    <string name="home_add_game_search_hint">Cari aplikasi terpasang</string>
+    <string name="home_add_game_empty">Semua aplikasi yang bisa dibuka sudah ada di daftar</string>
+    <string name="home_usage_banner_text">Izinkan akses penggunaan untuk melihat kapan terakhir main dan estimasi waktu bermain</string>
+    <string name="home_usage_banner_action">Izinkan</string>
+    <string name="home_favorite_cd">Favorit</string>
+    <string name="home_remove_cd">Hapus dari daftar</string>
+    <string name="home_manual_badge">Manual</string>
+    <string name="home_device_status_cd">Status perangkat</string>
+
+    <!-- Device status -->
+    <string name="device_status_title">Status Perangkat</string>
+    <string name="label_battery">Baterai</string>
+    <string name="label_ram">RAM</string>
+    <string name="label_thermal">Suhu</string>
+    <string name="label_cpu">CPU</string>
+    <string name="cpu_locked_message">Android membatasi akses ke data CPU sistem sejak Android 8 — aplikasi biasa tidak bisa membacanya. Aktifkan Root atau Shizuku untuk data asli.</string>
+    <string name="cpu_locked_action">Buka Akses Sistem</string>
+    <string name="cpu_measuring">Mengukur…</string>
+
+    <!-- Overlay -->
+    <string name="overlay_notification_title">Overlay GameSpace aktif</string>
+    <string name="overlay_notification_body">Ketuk untuk kembali ke aplikasi. Geser bubble untuk pindah posisi.</string>
+    <string name="overlay_toggle_label">Overlay Mengambang</string>
+    <string name="overlay_toggle_desc">Tampilkan bubble performa di atas aplikasi lain, termasuk saat main game</string>
+    <string name="overlay_permission_message">Butuh izin \"Tampil di atas aplikasi lain\" dulu</string>
+    <string name="overlay_permission_action">Izinkan</string>
+
+    <!-- Booster -->
+    <string name="booster_title">Booster</string>
+    <string name="booster_brightness_label">Kecerahan</string>
+    <string name="booster_brightness_permission_message">Butuh izin ubah pengaturan sistem</string>
+    <string name="booster_dnd_label">Jangan Ganggu</string>
+    <string name="booster_dnd_desc">Blokir notifikasi selain prioritas selagi main</string>
+    <string name="booster_dnd_permission_message">Butuh izin akses kebijakan notifikasi</string>
+    <string name="booster_animation_label">Kurangi Animasi</string>
+    <string name="booster_animation_desc">Animasi sistem 0.5x — transisi lebih cepat, bukan performa game itu sendiri</string>
+    <string name="booster_refresh_rate_label">Refresh Rate</string>
+    <string name="booster_refresh_rate_desc">Kunci refresh rate layar. Auto mengembalikan ke pengaturan bawaan perangkat</string>
+    <string name="booster_elevated_required_message">Butuh Root atau Shizuku — ini nulis ke tabel pengaturan yang nggak bisa diberi izin lewat toggle biasa</string>
+    <string name="booster_permission_action">Izinkan</string>
+
+    <!-- Blocker -->
+    <string name="blocker_title">Blocker</string>
+    <string name="blocker_notification_label">Blokir Notifikasi</string>
+    <string name="blocker_notification_desc">Sembunyikan semua notifikasi dari aplikasi lain selagi aktif — termasuk SMS/chat, tanpa perlu izin baca SMS terpisah</string>
+    <string name="blocker_notification_permission_message">Butuh izin akses notifikasi</string>
+    <string name="blocker_call_label">Blokir Panggilan</string>
+    <string name="blocker_call_desc">Tolak panggilan masuk selagi aktif, tetap tercatat di log panggilan</string>
+    <string name="blocker_call_permission_message">Butuh peran penyaring panggilan</string>
+    <string name="blocker_call_unavailable_message">Perangkat/operator ini tidak mendukung fitur penyaring panggilan</string>
+    <string name="blocker_permission_action">Izinkan</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_theme_section">Tampilan</string>
+    <string name="settings_dark_mode_label">Mode Gelap</string>
+    <string name="dark_mode_light">Terang</string>
+    <string name="dark_mode_dark">Gelap</string>
+    <string name="dark_mode_system">Ikuti Sistem</string>
+    <string name="settings_amoled_label">AMOLED Hitam Pekat</string>
+    <string name="settings_amoled_desc">Latar benar-benar hitam saat mode gelap aktif</string>
+    <string name="settings_dynamic_color_label">Warna Dinamis</string>
+    <string name="settings_dynamic_color_desc">Ambil palet warna dari wallpaper (Android 12+)</string>
+    <string name="settings_backup_section">Backup \u0026 Restore</string>
+    <string name="settings_export_label">Ekspor Library</string>
+    <string name="settings_export_desc">Simpan daftar game, favorit, dan riwayat sebagai file JSON</string>
+    <string name="settings_export_action">Ekspor</string>
+    <string name="settings_import_label">Impor Library</string>
+    <string name="settings_import_desc">Muat ulang dari file JSON hasil ekspor sebelumnya</string>
+    <string name="settings_import_action">Impor</string>
+    <string name="settings_about_section">Tentang</string>
+    <string name="settings_about_body">GameSpace oleh Siroha — %1$s</string>
+</resources>
