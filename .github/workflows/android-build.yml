@@ -1,34 +1,38 @@
 # CI build for GameSpace.
 #
-# Why this workflow installs Gradle directly instead of just running
-# ./gradlew like a normal Android CI setup: this project was authored in a
-# sandboxed environment with no network access and no Android SDK, so
-# gradle/wrapper/gradle-wrapper.jar — a compiled binary, not something
-# that can be written as text — was never generated. Everything else
-# about the wrapper (gradlew, gradlew.bat, gradle-wrapper.properties) is
-# either real text this repo already has, or gets generated fresh below.
+# Revised after the first real run failed — every ./gradlew step errored
+# with "No such file or directory". The build-log artifact only captured
+# output starting partway through the job, so the exact failing step
+# wasn't directly visible in it, but the pattern (gradlew never got
+# created) pointed at the Gradle-bootstrap chain, and separately-verified
+# evidence turned up an active, currently-unresolved GitHub-hosted-runner
+# issue: sdkmanager is missing/broken on current runner images
+# (actions/runner-images#13674), which would explain the whole downstream
+# cascade — an early non-always() step failing silently skips everything
+# after it except the if:always() steps, which is exactly the shape of
+# what happened. Two changes address both the immediate cause and the
+# blind spot that made it hard to diagnose:
 #
-# The fix: install a specific Gradle version directly (gradle/actions/
-# setup-gradle's gradle-version input does this independent of any
-# wrapper), run `gradle wrapper` to generate a complete, correct wrapper
-# matching gradle-wrapper.properties, THEN switch to ./gradlew for the
-# actual build — which is what every subsequent step here does. Nothing
-# is committed back to the repo; the wrapper regenerates every run. That
-# trades a few seconds per run for never risking a stale or
-# wrong-version jar sitting in git — worth reconsidering if build times
-# become a real concern later.
+# 1. Gradle is now installed by hand (curl + unzip + $GITHUB_PATH)
+#    instead of through gradle/actions/setup-gradle. This isn't a claim
+#    that action is broken — it's that a manual install has fewer moving
+#    parts to be uncertain about, and every step of it is independently
+#    verifiable in the log (gradle --version, ls -la gradlew) rather than
+#    trusting one action call to have done the right thing silently.
+# 2. The Android SDK step no longer assumes sdkmanager works. It's
+#    wrapped in continue-on-error and checks `sdkmanager --version`
+#    first — GitHub's own runner-images docs show platform 36 already
+#    pre-installed on current Ubuntu images, so if sdkmanager itself is
+#    the broken part (the known issue above), the build can likely still
+#    proceed on what's already there. If compileSdk 36 genuinely isn't
+#    available, the actual Gradle build step will now surface that as
+#    its own specific, readable AGP error instead of this step silently
+#    swallowing the real problem.
 #
-# Action versions below (checkout@v6, setup-java@v5, setup-gradle@v6,
-# upload-artifact@v4) reflect what current docs showed at the time this
-# was written — action marketplace versions move fast enough that they're
-# worth a quick check against the marketplace if this workflow ever
-# starts failing at a setup step specifically, rather than a build step.
-#
-# gradle-wrapper.properties pins Gradle 8.13 as a safe pairing for AGP
-# 8.11 (gradle/libs.versions.toml) — Gradle tends to work fine with older
-# AGP versions than its own release, so newer-than-strictly-required is
-# the safer direction to round to. If setup-gradle's log shows AGP
-# rejecting this Gradle version as too old, that's the number to bump.
+# Every stage below writes to build-output.log now, not just the final
+# build/test/lint steps, specifically so a failure anywhere in the
+# bootstrap chain is visible in the one downloadable artifact instead of
+# requiring a trip into the Actions UI to find.
 
 name: Android CI Build
 
@@ -60,27 +64,55 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android SDK platform 36 and build-tools
-        # GitHub-hosted ubuntu-latest runners ship with Android SDK
-        # command-line tools (including sdkmanager) already on PATH — no
-        # separate SDK-setup action needed, just the specific platform/
-        # build-tools this project's compileSdk (36) targets. build-tools
-        # version below is a best guess (matching the platform number,
-        # the usual convention for a first release) — not independently
-        # confirmed, so if this step fails on a "package not found"
-        # error specifically, check `sdkmanager --list` output in the
-        # log for the exact available version string.
+      - name: Locate Android SDK on this runner
         run: |
-          yes | sdkmanager --licenses > /dev/null || true
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          {
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+            SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+            if [ -d "$SDK_ROOT/cmdline-tools/latest/bin" ]; then
+              echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+              echo "Added $SDK_ROOT/cmdline-tools/latest/bin to PATH"
+            fi
+            echo "Platforms already present on this runner:"
+            ls "$SDK_ROOT/platforms" 2>&1 || echo "(no platforms dir at $SDK_ROOT/platforms)"
+          } 2>&1 | tee -a build-output.log
 
-      - name: Set up Gradle ${{ env.GRADLE_VERSION }}
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: ${{ env.GRADLE_VERSION }}
+      - name: Install Android SDK platform 36 / build-tools (best effort)
+        continue-on-error: true
+        run: |
+          {
+            if ! sdkmanager --version; then
+              echo "sdkmanager unavailable on this runner (known current" \
+                   "GitHub-hosted-runner issue) — continuing on whatever" \
+                   "was already pre-installed; the actual build step below" \
+                   "will fail with a specific error if compileSdk 36" \
+                   "genuinely isn't available."
+              exit 0
+            fi
+            yes | sdkmanager --licenses > /dev/null || true
+            sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          } 2>&1 | tee -a build-output.log
+
+      - name: Install Gradle ${{ env.GRADLE_VERSION }} directly
+        run: |
+          {
+            curl -sL -o /tmp/gradle.zip \
+              "https://services.gradle.org/distributions/gradle-${{ env.GRADLE_VERSION }}-bin.zip"
+            unzip -q /tmp/gradle.zip -d /opt
+            echo "/opt/gradle-${{ env.GRADLE_VERSION }}/bin" >> "$GITHUB_PATH"
+          } 2>&1 | tee -a build-output.log
+
+      - name: Verify Gradle is on PATH
+        run: gradle --version 2>&1 | tee -a build-output.log
 
       - name: Generate gradle-wrapper.jar
-        run: gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }} --stacktrace
+        run: |
+          {
+            gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }} --stacktrace
+            echo "--- generated wrapper files ---"
+            ls -la gradlew gradlew.bat gradle/wrapper/
+          } 2>&1 | tee -a build-output.log
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
@@ -88,7 +120,7 @@ jobs:
       - name: Build debug APK
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee build-output.log
+          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee -a build-output.log
 
       - name: Run unit tests
         if: always()
@@ -110,9 +142,9 @@ jobs:
             echo ""
             echo "Full log: see the \`build-log\` artifact below."
             echo ""
-            echo "### Last 40 log lines"
+            echo "### Last 60 log lines"
             echo '```'
-            tail -n 40 build-output.log
+            tail -n 60 build-output.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 

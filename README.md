@@ -363,44 +363,63 @@ split, if you want it, is a mechanical move, not a redesign.
 `.github/workflows/android-build.yml` builds a debug APK on every push/PR
 to `main`/`master`, plus a manual trigger from the Actions tab.
 
-**Why it installs Gradle directly instead of just running `./gradlew`
-like a normal setup:** `gradle/wrapper/gradle-wrapper.jar` is a compiled
-binary, not something this sandboxed environment could produce as text —
-only `gradle-wrapper.properties` (plain text, pins Gradle 8.13) exists so
-far. The workflow installs Gradle 8.13 directly (`gradle/actions/
-setup-gradle`'s `gradle-version` input does this independent of any
-wrapper), runs `gradle wrapper` to generate a complete, correct wrapper
-matching that pinned version, *then* switches to `./gradlew` for
-everything else — which is the normal, recommended pattern once the
-wrapper exists. Nothing gets committed back; the wrapper regenerates
-every run rather than risking a stale jar sitting in git. Worth
-reconsidering if build times become a real concern, but for now this is
-the more robust default.
+**Revised after the first real run failed.** Every `./gradlew` step
+errored with `No such file or directory`. The build-log artifact only
+captured output starting partway through the job at the time, so the
+exact failing step wasn't directly visible in that one file — but
+separately-verified evidence turned up an active, currently-unresolved
+GitHub-hosted-runner issue: `sdkmanager` is missing/broken on current
+runner images (`actions/runner-images#13674`). That fully explains the
+cascade — an early step failing (without `if: always()`) silently skips
+everything after it except the `if: always()` steps, which matched
+exactly what the log showed. Two changes:
+
+1. **Gradle is now installed by hand** (`curl` + `unzip` + `$GITHUB_PATH`)
+   instead of through `gradle/actions/setup-gradle`. Not a claim that
+   action is broken — a manual install just has fewer moving parts to be
+   uncertain about, and every step of it is independently checkable in
+   the log (`gradle --version`, `ls -la gradlew`) instead of trusting one
+   action call to have done the right thing silently.
+2. **The Android SDK step no longer assumes `sdkmanager` works.** It's
+   wrapped in `continue-on-error: true` and checks `sdkmanager --version`
+   first — GitHub's own runner-images docs show platform 36 already
+   pre-installed on current Ubuntu images, so if `sdkmanager` itself is
+   the broken part, the build can likely proceed on what's already
+   there. If compileSdk 36 genuinely isn't available, the actual Gradle
+   build step now surfaces that as its own specific, readable AGP error
+   instead of this step silently swallowing the real one.
+
+Every stage writes into `build-output.log` now, not just the final
+build/test/lint steps, specifically so a failure anywhere in the
+bootstrap chain shows up in the one downloadable artifact instead of
+requiring a trip into the Actions UI to find it.
+
+**What's actually verified vs. still a best guess:** the YAML itself
+parses correctly and every embedded shell script passes `bash -n` —
+real syntax validation, not just careful reading. What that *can't*
+confirm: whether this specific runner environment behaves the way the
+runner-images docs and the linked issue describe, or whether
+`build-tools;36.0.0` is the exact right version string if `sdkmanager`
+turns out to work fine after all. Both should be immediately visible in
+the next run's log either way.
 
 **Logging**: every Gradle invocation runs with `--stacktrace`, and
-`assembleDebug`/`testDebugUnitTest`/`lintDebug` all append to one
+`assembleDebug`/`testDebugUnitTest`/`lintDebug` all append to the same
 `build-output.log`. That log, the full `app/build/reports` directory
 (lint + test HTML/XML reports), and — only on success — the built debug
 APK are all uploaded as workflow artifacts, with `if: always()` on the
-log/reports uploads specifically so they're still there to look at when
-the build fails, not just when it succeeds. The job summary tab also
-gets the last 40 log lines for a quick glance without downloading
-anything.
+log/reports uploads specifically so they're still there when the build
+fails, not just when it succeeds. The job summary tab also gets the last
+60 log lines for a quick glance without downloading anything.
 
-**Worth double-checking on the first real run** — genuinely unverified,
-not just hedged prose:
-- The exact `build-tools;36.0.0` version string. It's a reasonable guess
-  (matching the platform number, the usual convention for a first
-  release) but not confirmed against what's actually published; if the
-  SDK-install step fails specifically, that's almost certainly why.
-- Whether `ubuntu-latest` runners still ship `sdkmanager` on `PATH`
-  without any separate setup action — true for a long time and not
-  expected to have changed, but this workflow leans on it rather than
-  using a dedicated Android-SDK-setup action.
+**Worth double-checking on the next run:**
+- The exact `build-tools;36.0.0` version string — a reasonable guess,
+  not confirmed against what's actually published.
+- Whether `ANDROID_HOME`/`ANDROID_SDK_ROOT` point where the "Locate
+  Android SDK" step assumes — its own log output will show this
+  directly.
 - The pinned action versions (`checkout@v6`, `setup-java@v5`,
-  `setup-gradle@v6`, `upload-artifact@v4`) reflect current docs as of
-  writing — Marketplace versions move fast enough to be worth a glance
-  if a *setup* step fails specifically, as opposed to the actual build.
+  `upload-artifact@v4`) reflect current docs as of writing.
 
 ## Roadmap
 
