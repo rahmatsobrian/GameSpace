@@ -1,38 +1,13 @@
 # CI build for GameSpace.
 #
-# Revised after the first real run failed — every ./gradlew step errored
-# with "No such file or directory". The build-log artifact only captured
-# output starting partway through the job, so the exact failing step
-# wasn't directly visible in it, but the pattern (gradlew never got
-# created) pointed at the Gradle-bootstrap chain, and separately-verified
-# evidence turned up an active, currently-unresolved GitHub-hosted-runner
-# issue: sdkmanager is missing/broken on current runner images
-# (actions/runner-images#13674), which would explain the whole downstream
-# cascade — an early non-always() step failing silently skips everything
-# after it except the if:always() steps, which is exactly the shape of
-# what happened. Two changes address both the immediate cause and the
-# blind spot that made it hard to diagnose:
+# Uses the committed Gradle wrapper (gradlew + gradle-wrapper.jar) which
+# bootstraps the correct Gradle version automatically. No manual Gradle
+# install needed — the wrapper handles everything.
 #
-# 1. Gradle is now installed by hand (curl + unzip + $GITHUB_PATH)
-#    instead of through gradle/actions/setup-gradle. This isn't a claim
-#    that action is broken — it's that a manual install has fewer moving
-#    parts to be uncertain about, and every step of it is independently
-#    verifiable in the log (gradle --version, ls -la gradlew) rather than
-#    trusting one action call to have done the right thing silently.
-# 2. The Android SDK step no longer assumes sdkmanager works. It's
-#    wrapped in continue-on-error and checks `sdkmanager --version`
-#    first — GitHub's own runner-images docs show platform 36 already
-#    pre-installed on current Ubuntu images, so if sdkmanager itself is
-#    the broken part (the known issue above), the build can likely still
-#    proceed on what's already there. If compileSdk 36 genuinely isn't
-#    available, the actual Gradle build step will now surface that as
-#    its own specific, readable AGP error instead of this step silently
-#    swallowing the real problem.
-#
-# Every stage below writes to build-output.log now, not just the final
-# build/test/lint steps, specifically so a failure anywhere in the
-# bootstrap chain is visible in the one downloadable artifact instead of
-# requiring a trip into the Actions UI to find.
+# SDK: compileSdk 36, minSdk 29, targetSdk 36.
+# The runner may already have android-36 pre-installed; the sdkmanager
+# step is a best-effort fallback wrapped in continue-on-error so the
+# build step itself surfaces a clear error if the platform is missing.
 
 name: Android CI Build
 
@@ -46,9 +21,6 @@ on:
 permissions:
   contents: read
 
-env:
-  GRADLE_VERSION: '8.13'
-
 jobs:
   build:
     name: Build debug APK
@@ -56,71 +28,49 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Locate Android SDK on this runner
-        run: |
-          {
-            echo "ANDROID_HOME=$ANDROID_HOME"
-            echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-            SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-            if [ -d "$SDK_ROOT/cmdline-tools/latest/bin" ]; then
-              echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-              echo "Added $SDK_ROOT/cmdline-tools/latest/bin to PATH"
-            fi
-            echo "Platforms already present on this runner:"
-            ls "$SDK_ROOT/platforms" 2>&1 || echo "(no platforms dir at $SDK_ROOT/platforms)"
-          } 2>&1 | tee -a build-output.log
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Verify Gradle wrapper
+        run: ./gradlew --version
 
       - name: Install Android SDK platform 36 / build-tools (best effort)
         continue-on-error: true
         run: |
           {
-            if ! sdkmanager --version; then
-              echo "sdkmanager unavailable on this runner (known current" \
-                   "GitHub-hosted-runner issue) — continuing on whatever" \
-                   "was already pre-installed; the actual build step below" \
-                   "will fail with a specific error if compileSdk 36" \
-                   "genuinely isn't available."
-              exit 0
+            SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+            echo "ANDROID_HOME=$ANDROID_HOME"
+            echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+            echo "Platforms on this runner:"
+            ls "$SDK_ROOT/platforms" 2>&1 || echo "(none)"
+
+            if ! command -v sdkmanager &>/dev/null; then
+              # Try the standard SDK cmdline-tools path
+              CMDLINE="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+              if [ -x "$CMDLINE" ]; then
+                export PATH="$(dirname "$CMDLINE"):$PATH"
+              else
+                echo "sdkmanager not found — continuing on pre-installed SDK."
+                exit 0
+              fi
             fi
-            yes | sdkmanager --licenses > /dev/null || true
-            sdkmanager "platforms;android-36" "build-tools;36.0.0"
-          } 2>&1 | tee -a build-output.log
 
-      - name: Install Gradle ${{ env.GRADLE_VERSION }} directly
-        run: |
-          {
-            curl -sL -o /tmp/gradle.zip \
-              "https://services.gradle.org/distributions/gradle-${{ env.GRADLE_VERSION }}-bin.zip"
-            unzip -q /tmp/gradle.zip -d /opt
-            echo "/opt/gradle-${{ env.GRADLE_VERSION }}/bin" >> "$GITHUB_PATH"
-          } 2>&1 | tee -a build-output.log
-
-      - name: Verify Gradle is on PATH
-        run: gradle --version 2>&1 | tee -a build-output.log
-
-      - name: Generate gradle-wrapper.jar
-        run: |
-          {
-            gradle wrapper --gradle-version ${{ env.GRADLE_VERSION }} --stacktrace
-            echo "--- generated wrapper files ---"
-            ls -la gradlew gradlew.bat gradle/wrapper/
-          } 2>&1 | tee -a build-output.log
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+            yes | sdkmanager --licenses > /dev/null 2>&1 || true
+            sdkmanager "platforms;android-36" "build-tools;36.0.0" 2>&1
+          } 2>&1 | tee build-output.log
 
       - name: Build debug APK
         run: |
           set -o pipefail
-          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee -a build-output.log
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee -a build-output.log
 
       - name: Run unit tests
         if: always()
@@ -142,15 +92,13 @@ jobs:
             echo ""
             echo "Full log: see the \`build-log\` artifact below."
             echo ""
-            echo "### Last 60 log lines"
+            echo "### Last 80 log lines"
             echo '```'
-            tail -n 60 build-output.log
+            tail -n 80 build-output.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-      # if: always() on the three artifact uploads below is deliberate —
-      # the log and reports matter most exactly when the build failed,
-      # which is also the one case a plain "on success" upload would skip.
+      # if: always() on logs/reports — they matter most when the build fails.
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4

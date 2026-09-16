@@ -3,7 +3,9 @@ package com.siroha.gamespace.core.privilege
 import android.content.Context
 import android.content.pm.PackageManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -84,17 +86,18 @@ class ShizukuPrivilegeSource @Inject constructor(
 
     suspend fun exec(command: String): PrivilegedExecResult {
         if (peekStatus().state != AccessState.GRANTED) return PrivilegedExecResult.Unavailable
-        return newRemoteExec(command)
+        return withContext(Dispatchers.IO) { newRemoteExec(command) }
     }
 
     private fun newRemoteExec(command: String): PrivilegedExecResult = runCatching {
         val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
         val output = process.inputStream.bufferedReader().readLines()
+        val error = process.errorStream.bufferedReader().readLines()
         val exit = process.waitFor()
         if (exit == 0) {
             PrivilegedExecResult.Success(output)
         } else {
-            PrivilegedExecResult.Failure("exit $exit")
+            PrivilegedExecResult.Failure("exit $exit: ${error.joinToString("\n")}")
         }
     }.getOrElse { e ->
         PrivilegedExecResult.Failure(e.message ?: "Shizuku exec gagal")
