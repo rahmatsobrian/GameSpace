@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
+import rikka.shizuku.ShizukuRemoteProcess
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -90,10 +91,12 @@ class ShizukuPrivilegeSource @Inject constructor(
     }
 
     private fun newRemoteExec(command: String): PrivilegedExecResult = runCatching {
-        val process = Shizuku.newProcess(arrayOf("sh", "-c", command), null, null)
-        val output = process.inputStream.bufferedReader().readLines()
-        val error = process.errorStream.bufferedReader().readLines()
-        val exit = process.waitFor()
+        val remoteProcess = newProcessViaReflection(arrayOf("sh", "-c", command))
+            ?: return@runCatching PrivilegedExecResult.Failure("gagal buat Shizuku process")
+        val output = remoteProcess.inputStream.bufferedReader().readLines()
+        val error = remoteProcess.errorStream.bufferedReader().readLines()
+        val exit = remoteProcess.waitFor()
+        remoteProcess.destroy()
         if (exit == 0) {
             PrivilegedExecResult.Success(output)
         } else {
@@ -102,6 +105,21 @@ class ShizukuPrivilegeSource @Inject constructor(
     }.getOrElse { e ->
         PrivilegedExecResult.Failure(e.message ?: "Shizuku exec gagal")
     }
+
+    private fun newProcessViaReflection(
+        command: Array<String>,
+        env: Array<String>? = null,
+        workingDir: String? = null
+    ): ShizukuRemoteProcess? = runCatching {
+        val method = Shizuku::class.java.getDeclaredMethod(
+            "newProcess",
+            Array<String>::class.java,
+            Array<String>::class.java,
+            String::class.java
+        )
+        method.isAccessible = true
+        method.invoke(null, command, env, workingDir) as? ShizukuRemoteProcess
+    }.getOrNull()
 
     private fun isShizukuAppInstalled(): Boolean = try {
         context.packageManager.getPackageInfo(SHIZUKU_PACKAGE_NAME, 0)
