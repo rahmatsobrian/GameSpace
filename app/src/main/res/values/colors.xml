@@ -16,4 +16,6 @@
     <color name="barButtonAccent">@android:color/system_accent1_600</color>
     <color name="barButtonBackground">@android:color/system_accent1_600</color>
     <color name="onBarBackground">@android:color/system_neutral1_0</color>
+    <!-- Dipertahankan agar sisa file lama (mipmap-anydpi-v26) tetap bisa di-link -->
+    <color name="ic_bg">#1B2A41</color>
 </resources>
