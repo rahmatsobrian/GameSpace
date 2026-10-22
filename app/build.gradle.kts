@@ -94,6 +94,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.13.2")
     implementation("com.google.dagger:hilt-android:2.57.2")
     kapt("com.google.dagger:hilt-compiler:2.57.2")
+    // Hilt 2.57.2 membawa kotlin-metadata-jvm yang hanya paham metadata <= 2.2.0; Kotlin 2.3.0 menulis 2.3.0.
+    kapt("org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.0")
 
     // Shizuku (prioritas utama untuk akses shell tanpa root)
     implementation("dev.rikka.shizuku:api:13.1.5")
@@ -161,3 +163,7 @@ val generateSymbols by tasks.registering {
 
 android.sourceSets.getByName("main").res.srcDir(layout.buildDirectory.dir("generated/symbols/res"))
 tasks.matching { it.name == "preBuild" }.configureEach { dependsOn(generateSymbols) }
+
+configurations.matching { it.name.startsWith("kapt") }.configureEach {
+    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-metadata-jvm:2.3.0")
+}
