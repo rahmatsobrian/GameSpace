@@ -1,11 +1,31 @@
-# Game Space Universal
+# GameSpace Universal
 
-Versi universal (API publik saja) yang terinspirasi dari GameSpace AxionOS. Kode ditulis ulang, bukan disalin.
-Tidak butuh platform key, `sharedUserId`, atau API hidden, sehingga bisa dipasang di ROM OEM mana pun (Android 10+).
+Port universal dari [GameSpace AxionOS](https://github.com/chaldeaprjkt) (Apache-2.0) agar bisa dipasang sebagai
+aplikasi biasa di ROM OEM (XOS, ColorOS/OxygenOS, Funtouch/OriginOS, MIUI/HyperOS, dll.), minimal Android 13.
+
+UI (Compose) dan seluruh logika game bar dipertahankan dari source asli. Yang diganti hanya lapisan sistem:
+
+| Dulu (aplikasi sistem Axion) | Sekarang |
+|---|---|
+| `sharedUserId=system`, platform key, API hidden | App biasa + **Shizuku** (prioritas) atau **root** |
+| Game Mode (`GameManager`) | `cmd game mode <mode> <pkg>` |
+| FPS (`TaskFpsCallback`) | `dumpsys SurfaceFlinger --latency` (perkiraan) |
+| Bypass charging, touch boost (prop Axion) | node sysfs/procfs (kandidat + node kustom), butuh root |
+| Gestur screenshot 3 jari | kunci setting ROM dicari saat runtime |
+| Screenshot | `input keyevent 120` |
+| Boost memori (`AxMemoryManager`) | `am kill-all` |
+| Tile (`AxPlatformClient`) | perintah `svc`/`settings`/`cmd` lewat Shizuku |
+| Pemicu sesi game (patch SystemUI) | `GameWatcherService` (UsageStats / dumpsys) |
+| `SceneTransitionLayout`, `AxionTheme` | implementasi pengganti (crossfade, Material3 dinamis) |
 
 ## Build
-1. Buka folder ini di Android Studio (JDK 17), biarkan sync, lalu Run. Atau `gradle wrapper --gradle-version 8.9` lalu `./gradlew assembleDebug`.
-2. APK: `app/build/outputs/apk/debug/app-debug.apk`.
+Push ke GitHub; workflow `.github/workflows/build.yml` membuat APK release bertanda tangan
+(artifact `GameSpaceUniversal-release`). Lokal: `./gradlew assembleRelease`.
+Ikon Material Symbols diunduh saat build (lihat `generateSymbols` di `app/build.gradle.kts`).
 
-## Fitur yang dihapus dari versi asli (tidak ada API publik)
-Game Mode (GameManager), FPS counter, bypass charging, touch boost, screenshot 3 jari, kontrol memori internal Axion.
+## Pemakaian
+1. Pasang Shizuku, start (wireless debugging atau root), lalu buka Game Space -> layar Setup -> "Beri izin" -> "Beri semua izin otomatis".
+2. Tambah game di Hub. Buka game; bubble game bar muncul.
+
+## Catatan
+Perubahan dari versi asli dan keterbatasannya ada di balasan yang menyertai file ini.

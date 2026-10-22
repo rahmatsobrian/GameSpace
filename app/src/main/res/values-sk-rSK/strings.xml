@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021 Chaldeaprjkt
+                   2022 crDroid Android Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="memory_boost">Zvýšiť pamäť</string>
+    <string name="memory_boost_summary">Optimalizovať pamäť</string>
+    <string name="boost_memory">Pamäť zvýšená</string>
+    <string name="quick_start_apps_title">Aplikácie na rýchle spustenie</string>
+    <string name="quick_start_apps_summary">Vyberte aplikácie na rýchle spustenie</string>
+    <string name="settings_title">Herný priestor</string>
+    <string name="settings_summary">Správa herných nastavení</string>
+    <!-- Game options -->
+    <string name="in_game_preferences_title">Možnosti v hre</string>
+    <string name="heads_up_disabled_summary">Zakázať heads-up oznámenia počas hry</string>
+    <string name="suppress_fullscreen_intent_title">Blokovať udalosti na celej obrazovke</string>
+    <string name="suppress_fullscreen_intent_summary">Nezobrazovať udalosti na celej obrazovke, napr. prichádzajúci hovor</string>
+    <string name="stay_awake_title">Nevypínať obrazovku</string>
+    <string name="lock_gesture_title">Gesto uzamknutia</string>
+    <string name="auto_brightness_disabled_title">Zakázať automatický jas</string>
+    <string name="three_screenshot_disabled_title">Zakázať gesto pre snímku obrazovky</string>
+    <string name="three_screenshot_disabled_summary">Dočasne zakázať gesto potiahnutia tromi prstami počas hry</string>
+    <string name="chaldea">chaldeaprjkt</string>
+    <string name="adb_disabled_title">Zakázať ladenie USB</string>
+    <string name="adb_disabled_summary">Dočasne zakázať ladenie USB ADB počas hry</string>
+    <string name="gamespace_menu_opacity_title">Priehľadnosť vrstvy menu</string>
+    <!-- Notification Mode -->
+    <string name="notification_mode_title">Režim upozornení</string>
+    <string name="notification_mode_hide">Nezobrazovať</string>
+    <string name="notification_mode_headsup">Zobraziť plávajúce oznámenia</string>
+    <string name="notification_mode_reticker">Zobraziť reTicker</string>
+    <string name="notification_mode_danmaku">Zobraziť Danmaku</string>
+    <!-- Ringer Mode -->
+    <string name="ringer_mode_title">Režim zvonenia</string>
+    <string-array name="ringer_mode_entries">
+        <item>Tichý</item>
+        <item>Vibrácie</item>
+        <item>Normálny</item>
+        <item>Nemeniť</item>
+    </string-array>
+    <string name="ringer_mode_silent">Tichý</string>
+    <string name="ringer_mode_vibrate">Vibrácie</string>
+    <string name="ringer_mode_normal">Normálny</string>
+    <string name="ringer_mode_no_change">Nemeniť</string>
+    <!-- Game picker -->
+    <string name="game_list_title">Knižnica</string>
+    <string name="game_list_add_title">Pridať</string>
+    <string name="app_selector_label">Výber hry</string>
+    <string name="app_search_title">Hľadať</string>
+    <string name="game_remove_message">Naozaj odstrániť %1$s zo zoznamu hier?</string>
+    <!-- Configure game -->
+    <string name="per_app_title">Nastaviť hru</string>
+    <string name="per_app_mode_title">Preferovaný režim</string>
+    <string-array name="per_app_preferred_mode_entries">
+        <item>Štandardný</item>
+        <item>Výkon</item>
+        <item>Batéria</item>
+    </string-array>
+    <string name="per_app_angle_title">Použiť ANGLE (experimentálne)</string>
+    <string name="per_app_angle_summary">Namiesto natívnych ovládačov GELS sa používa renderer ANGLE.\nUPOZORNENIE!! Môže narušiť grafiku hry, používajte opatrne!</string>
+    <string name="cant_find_angle_pkg">ANGLE nie je k dispozícii</string>
+    <string name="per_app_unregister">Odstrániť %1$s z knižnice</string>
+    <string name="ram_usage">Využitie RAM: </string>
+    <string name="game_mode_unsupported">Nepodporované</string>
+    <string name="game_mode_standard">Štandardný</string>
+    <string name="game_mode_performance">Výkon</string>
+    <string name="game_mode_battery">Batéria</string>
+    <string-array name="game_mode_names">
+        <item>Nepodporované</item>
+        <item>Štandardný</item>
+        <item>Výkon</item>
+        <item>Batéria</item>
+    </string-array>
+    <!-- Custom seekbar -->
+    <string name="custom_seekbar_value">Hodnota: <xliff:g id="v">%s</xliff:g></string>
+    <string name="custom_seekbar_default_value">predvolená</string>
+    <string name="custom_seekbar_default_value_to_set">Predvolená hodnota: <xliff:g id="v">%s</xliff:g>\nPodržte pre nastavenie</string>
+    <string name="custom_seekbar_default_value_is_set">Predvolená hodnota je nastavená</string>
+    <!-- Game overlay -->
+    <string name="memory_format">Dostupná pamäť: <xliff:g id="availmemory" example="1000">%1$d</xliff:g>\/<xliff:g id="totalmemory" example="5000">%2$d</xliff:g> MB</string>
+    <!-- Tiles -->
+    <string name="game_mode_title">Režim</string>
+    <string name="fps_Info_title">FPS info</string>
+    <string name="notification_hide">Skryť</string>
+    <string name="notification_headsup">Plávajúce upozornenia</string>
+    <string name="notification_reticker">reTicker</string>
+    <string name="notification_danmaku">Danmaku</string>
+    <string name="state_enabled">Zapnuté</string>
+    <string name="state_disabled">Zakázané</string>
+    <string name="state_default">Predvolené</string>
+    <string name="in_game_calls_title">Režim hovorov</string>
+    <string name="in_game_calls_no_action">Žiadna akcia</string>
+    <string name="in_game_calls_auto_answer">Automaticky prijať</string>
+    <string name="in_game_calls_auto_reject">Automaticky odmietnuť</string>
+    <string name="in_game_calls_received_number">Prijatý hovor od %1$s</string>
+    <string name="in_game_calls_rejected_number">Odmietnutý hovor od %1$s</string>
+    <!-- Danmaku Notification Mode -->
+    <string name="danmaku_notification_mode_title">Režim notifikácií Danmaku</string>
+    <string name="danmaku_notification_mode_summary">Počas aktívnej hry zobraziť upozornenia ako danmaku alias odrážky</string>
+    <string name="bypass_charge_enabled_summary">Obísť nabíjanie</string>
+    <string name="bypass_charge_enabled_title">Povoliť obídenie nabíjania počas hrania hier</string>
+    <string name="gamespace_running">Herný priestor beží</string>
+    <string name="app_locked_message">Táto aplikácia je uzamknutá. Najprv ju odomknite.</string>
+    <string name="call_overlay_enabled_title">Prekrytie hovoru</string>
+    <string name="call_overlay_enabled_summary">Zobraziť minimálne prekrytie hovoru na prijímanie/odmietanie hovorov</string>
+    <string name="auto_brightness_disabled_summary">Udržiavať jas pevný počas hry</string>
+    
+    <!-- UI Strings -->
+    <string name="select_apps_to_launch">Vyberte aplikácie pre rýchle spustenie</string>
+    <string name="add_game">Pridať hru</string>
+    <string name="expanded">Rozbalené</string>
+    <string name="collapsed">Zbalené</string>
+    <string name="toggle_menu">Prepnúť menu</string>
+    <string name="close_menu">Zavrieť menu</string>
+    <string name="notifications">Notifikácie</string>
+    <string name="display_gestures">Displej a gestá</string>
+    <string name="no_games_added">Zatiaľ neboli pridané žiadne hry</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Zrušiť</string>
+    <string name="remove">Odstrániť</string>
+    <string name="back">Späť</string>
+    <string name="game_mode">Herný režim</string>
+    <string name="graphics">Grafika</string>
+    <string name="remove_from_library">Odstrániť z knižnice</string>
+    <string name="registered_game">Zaregistrovaná hra</string>
+    <string name="game_space">Herný priestor</string>
+    
+    <!-- Game Panel -->
+    <string name="save">Uložiť</string>
+    <string name="panel_options">Možnosti panelu</string>
+    <string name="brightness_slider">Posúvač jasu</string>
+    <string name="fps_graph">FPS graf</string>
+    <string name="selected_tiles">Vybrané dlaždice</string>
+    <string name="available_tiles">Dostupné dlaždice</string>
+    <string name="fps_stats">min %1$d | priemer %2$d | max %3$d</string>
+    <string name="add">Pridať</string>
+    
+    <!-- Tile Labels -->
+    <string name="tile_danmaku">Danmaku</string>
+    <string name="tile_stay_awake">Nevypínať obrazovku</string>
+    <string name="tile_wifi">Wi-Fi</string>
+    <string name="tile_dnd">Nerušiť</string>
+    <string name="tile_fps_info">FPS info</string>
+    <string name="tile_auto_rotate">Automatické otáčanie</string>
+    <string name="tile_boost_memory">Zrýchlenie pamäte</string>
+    <string name="tile_settings">Nastavenia</string>
+    <string name="tile_airplane_mode">Režim v lietadle</string>
+    <string name="tile_bluetooth">Bluetooth</string>
+    <string name="tile_mobile_data">Mobilné dáta</string>
+    <string name="tile_touch_boost">Zrýchlenie dotyku</string>
+    
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_reject">Odmietnuť</string>
+    <string name="cd_accept">Prijať</string>
+    <string name="cd_caller_photo">Fotka volajúceho</string>
+    <string name="cd_dismiss">Zavrieť</string>
+    <string name="cd_edit_tiles">Upraviť dlaždice</string>
+    <string name="cd_collapse">Zbaliť</string>
+    <string name="cd_expand">Rozbaliť</string>
+</resources>
