@@ -12,6 +12,8 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.android.axion.gamespace.setup
 
 import android.Manifest
@@ -95,7 +97,7 @@ class SetupActivity : ComponentActivity() {
 
 private class PermRow(val label: String, val ok: Boolean, val action: () -> Unit)
 
-private fun open(ctx: Context, i: Intent) {
+private fun openSettings(ctx: Context, i: Intent) {
     try { ctx.startActivity(i) } catch (_: Exception) {
         try {
             ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}")))
@@ -140,7 +142,7 @@ private fun SetupScreen(onDone: () -> Unit) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = {
                         if (!Shell.openShizukuApp(ctx)) {
-                            open(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
+                            openSettings(ctx, Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/download/")))
                         }
                     }) { Text("Buka Shizuku") }
                     Button(
@@ -188,19 +190,19 @@ private fun SetupScreen(onDone: () -> Unit) {
         val rows = remember(tick) {
             buildList {
                 add(PermRow("Display over other apps (overlay)", Perms.canOverlay(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkgUri))
+                    openSettings(ctx, Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, pkgUri))
                 })
                 add(PermRow("Usage access (deteksi game)", Perms.hasUsageAccess(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    openSettings(ctx, Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 })
                 add(PermRow("Modify system settings (brightness)", Perms.canWriteSettings(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, pkgUri))
+                    openSettings(ctx, Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, pkgUri))
                 })
                 add(PermRow("Do Not Disturb access", Perms.hasDnd(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    openSettings(ctx, Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
                 })
                 add(PermRow("Notification access (danmaku & musik)", Perms.hasListener(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    openSettings(ctx, Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 })
                 val runtime = buildList {
                     add(Manifest.permission.READ_PHONE_STATE)
@@ -212,7 +214,7 @@ private fun SetupScreen(onDone: () -> Unit) {
                     launcher.launch(runtime.toTypedArray())
                 })
                 add(PermRow("Baterai: tanpa pembatasan", Perms.ignoringBattery(ctx)) {
-                    open(ctx, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+                    openSettings(ctx, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
                 })
             }
         }
