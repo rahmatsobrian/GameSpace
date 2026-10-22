@@ -34,13 +34,14 @@ class SystemSettings @Inject constructor(
     private val gameModeUtils: GameModeUtils
 ) {
     private val resolver = context.contentResolver
+    private val HEADS_UP_KEY = "heads_up_notifications_enabled"
     private val db by lazy { context.getSharedPreferences("system_settings", Context.MODE_PRIVATE) }
 
     var headsup
         get() = Settings.Global.getInt(
-            resolver, Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED, 1) == 1
+            resolver, HEADS_UP_KEY, 1) == 1
         set(it) {
-            Sys.putGlobal(context, Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED, it.toInt().toString())
+            Sys.putGlobal(context, HEADS_UP_KEY, it.toInt().toString())
         }
 
     var autoBrightness

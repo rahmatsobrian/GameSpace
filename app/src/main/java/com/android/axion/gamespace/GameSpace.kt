@@ -32,6 +32,7 @@ class GameSpace : Hilt_GameSpace() {
         super.onCreate()
         Log.d(TAG, "Application created")
         Shell.init(this)
+        com.android.axion.gamespace.gamebar.FreeformLauncher.init(this)
         Shell.background {
             // tunggu binding Shizuku sebentar, lalu cari node perangkat dan kunci gestur 3 jari
             Thread.sleep(1500)

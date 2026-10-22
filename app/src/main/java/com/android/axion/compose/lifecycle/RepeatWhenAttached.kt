@@ -6,12 +6,12 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.ViewTreeLifecycleOwner
-import androidx.lifecycle.ViewTreeViewModelStoreOwner
+import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
-import androidx.savedstate.ViewTreeSavedStateRegistryOwner
+import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.DisposableHandle
@@ -58,9 +58,9 @@ fun View.repeatWhenAttached(
             if (job != null) return
             val o = ViewOwner()
             owner = o
-            ViewTreeLifecycleOwner.set(view, o)
-            ViewTreeSavedStateRegistryOwner.set(view, o)
-            ViewTreeViewModelStoreOwner.set(view, o)
+            view.setViewTreeLifecycleOwner(o)
+            view.setViewTreeSavedStateRegistryOwner(o)
+            view.setViewTreeViewModelStoreOwner(o)
             o.start()
             job = CoroutineScope(Dispatchers.Main.immediate + coroutineContext).launch {
                 o.block(view)

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerInputChange
+import com.android.compose.animation.scene.content.state.TransitionState
 import kotlinx.coroutines.CoroutineScope
 
 /*
@@ -30,15 +31,6 @@ class ElementKey(val debugName: String) {
 
 interface SwipeDetector {
     fun detectSwipe(change: PointerInputChange): Boolean
-}
-
-sealed interface TransitionState {
-    class Idle(val currentScene: SceneKey) : TransitionState
-
-    sealed class Transition(val fromScene: SceneKey, val toScene: SceneKey) : TransitionState {
-        class ChangeScene(fromScene: SceneKey, toScene: SceneKey, val currentScene: SceneKey) :
-            Transition(fromScene, toScene)
-    }
 }
 
 class InterruptionResult(val animateFrom: SceneKey, val chain: Boolean = true)

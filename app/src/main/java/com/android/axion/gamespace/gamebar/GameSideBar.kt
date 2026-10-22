@@ -262,8 +262,6 @@ class GameSidebar(
         panelView = pv
 
         try {
-            Process.setThreadGroupAndCpuset(Process.myPid(), Process.THREAD_GROUP_TOP_APP)
-            Process.setProcessGroup(Process.myPid(), Process.THREAD_GROUP_TOP_APP)
             wm.addView(pv, panelLayoutParam)
             gameBarView.visibility = View.GONE
         } catch (_: Exception) {
@@ -285,10 +283,6 @@ class GameSidebar(
         panelView?.let { pv ->
             runCatching { wm.removeViewImmediate(pv) }
             panelView = null
-        }
-        runCatching {
-            Process.setThreadGroupAndCpuset(Process.myPid(), 9)
-            Process.setProcessGroup(Process.myPid(), 9)
         }
 
         if (!shouldClose) {

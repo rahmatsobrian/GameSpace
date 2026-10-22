@@ -18,7 +18,7 @@ package com.android.axion.gamespace.gamebar.brightness
 import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
-import android.hardware.display.BrightnessInfo
+import com.android.axion.gamespace.compat.BrightnessInfo
 import android.hardware.display.DisplayManager
 import android.provider.Settings
 import android.view.Display
@@ -51,7 +51,15 @@ class BrightnessRepository @Inject constructor(private val context: Context) {
             Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
         ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
 
-        _brightnessInfo.value = display?.brightnessInfo
+        _brightnessInfo.value = readBrightness()
+    }
+
+    /** Display.brightnessInfo hidden; baca dari Settings.System (float jika ada, jika tidak int 0..255). */
+    private fun readBrightness(): BrightnessInfo {
+        val f = try { Settings.System.getFloat(contentResolver, "screen_brightness_float", -1f) } catch (_: Exception) { -1f }
+        val v = if (f >= 0f) f else
+            Settings.System.getInt(contentResolver, Settings.System.SCREEN_BRIGHTNESS, 128) / 255f
+        return BrightnessInfo(v.coerceIn(0f, 1f), 0f, 1f)
     }
 
     fun setBrightness(percent: Float) {

@@ -15,7 +15,7 @@
  */
 package com.android.axion.gamespace.gamebar.brightness
 
-import android.hardware.display.BrightnessInfo
+import com.android.axion.gamespace.compat.BrightnessInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
