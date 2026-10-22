@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.Properties
 
 plugins {
@@ -126,7 +128,7 @@ val generateSymbols by tasks.registering {
     <path android:fillColor="#FFFFFFFF" android:pathData="M12,4a8,8 0 1,0 0,16a8,8 0 1,0 0,-16z"/>
 </vector>"""
         fun fetch(url: String): String? = try {
-            val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+            val c = URL(url).openConnection() as HttpURLConnection
             c.connectTimeout = 8000; c.readTimeout = 8000
             if (c.responseCode == 200) c.inputStream.bufferedReader().readText() else null
         } catch (_: Exception) { null }
