@@ -163,11 +163,29 @@ class MusicController(private val context: Context) {
         }
     }
 
+    private var grantAttempted = false
+
     fun register() {
         try {
             sessionManager.addOnActiveSessionsChangedListener(sessionsChangedListener, listenerComponent, handler)
             val controllers = sessionManager.getActiveSessions(listenerComponent)
             updateActiveController(controllers)
+        } catch (e: SecurityException) {
+            // Di ROM biasa, MediaSession hanya bisa dibaca jika "Notification access" aktif untuk
+            // DanmakuServiceListener. Jika Shizuku/root ada, aktifkan otomatis lalu coba lagi.
+            android.util.Log.w("MusicController", "Notification access belum aktif: ${listenerComponent.flattenToShortString()}")
+            registerBroadcastFallback()
+            if (!grantAttempted && com.android.axion.gamespace.shell.Shell.available()) {
+                grantAttempted = true
+                com.android.axion.gamespace.shell.Shell.run(
+                    "cmd notification allow_listener ${listenerComponent.flattenToString()}"
+                ) {
+                    handler.postDelayed({
+                        unregisterBroadcastFallback()
+                        register()
+                    }, 1500L)
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             registerBroadcastFallback()

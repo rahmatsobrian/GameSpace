@@ -1,29 +1,48 @@
 package com.android.axion.gamespace.compat
 
+import android.os.SystemClock
+import android.util.Log
 import com.android.axion.gamespace.shell.Shell
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
- * FPS game lewat `dumpsys SurfaceFlinger --latency <layer>` (butuh Shizuku/root).
- * Nilai = jumlah frame yang ditampilkan dalam 1 detik terakhir (perkiraan, bukan counter sistem).
+ * FPS game lewat SurfaceFlinger (butuh Shizuku/root).
+ *
+ * Algoritma diadaptasi dari FPS Meter (https://github.com/rdevzph, MIT License, (c) 2026 Romel Brosas):
+ * resolusi layer lewat "Output Layer" lalu `--list`, hitung frame baru dari `--latency`,
+ * cross-check counter `frame=` untuk Vulkan, dan self-healing bila layer 0 FPS dua sampel berturut-turut.
+ * Semua perintah disaring di sisi shell agar hasil binder tetap kecil.
  */
 object FpsSource {
+    private const val TAG = "GSFps"
+    private const val PENDING = Long.MAX_VALUE
+
     private val listeners = CopyOnWriteArrayList<TaskFpsCallback>()
     private val exec = Executors.newSingleThreadScheduledExecutor()
     private var future: ScheduledFuture<*>? = null
+
     @Volatile private var pkg: String? = null
-    @Volatile private var layer: String? = null
 
     /** Diisi SessionService saat sesi game dimulai/berakhir. */
     @Volatile var gamePackage: String? = null
-        set(value) { if (field != value) layer = null; field = value }
+
+    // State berikut hanya disentuh dari thread executor.
+    private var currentPkg: String? = null
+    private var layer: String? = null
+    private var vulkan = false
+    private var lastSample = 0L
+    private var lastPresent = 0L
+    private var lastFrameCount = -1L
+    private var zeroCount = 0
 
     @Synchronized
     fun register(cb: TaskFpsCallback, gamePackage: String?) {
-        if (gamePackage != null && gamePackage != pkg) { pkg = gamePackage; layer = null }
+        if (gamePackage != null) pkg = gamePackage
         if (!listeners.contains(cb)) listeners.add(cb)
         if (future == null) {
             future = exec.scheduleWithFixedDelay({ tick() }, 0, 1000, TimeUnit.MILLISECONDS)
@@ -36,42 +55,172 @@ object FpsSource {
         if (listeners.isEmpty()) {
             future?.cancel(false)
             future = null
+            exec.execute { resetAll() }
         }
+    }
+
+    private fun resetLayer() {
+        lastPresent = 0L; lastFrameCount = -1L; zeroCount = 0
+    }
+
+    private fun resetAll() {
+        currentPkg = null; layer = null; lastSample = 0L; resetLayer()
+    }
+
+    private fun notifyAll(fps: Float) {
+        listeners.forEach { try { it.onFpsReported(fps) } catch (_: Exception) {} }
     }
 
     private fun tick() {
         try {
-            val p = gamePackage ?: pkg ?: return
-            if (!Shell.available()) return
-            var l = layer ?: findLayer(p)?.also { layer = it } ?: return
-            val q = l.replace("'", "'\\''")
-            val r = Shell.exec("dumpsys SurfaceFlinger --latency '$q'", 3000)
-            val fps = compute(r.out)
-            if (fps == null) { layer = null; return }
-            listeners.forEach { it.onFpsReported(fps) }
-        } catch (_: Exception) {}
+            val p = gamePackage ?: pkg
+            if (p == null) { Log.d(TAG, "tick: paket game belum diketahui"); return }
+            if (!Shell.available()) { Log.w(TAG, "tick: Shizuku/root belum tersedia"); return }
+
+            val now = SystemClock.elapsedRealtime()
+            val elapsed = if (lastSample == 0L) 1000L else (now - lastSample).coerceAtLeast(1L)
+            lastSample = now
+
+            if (p != currentPkg) {
+                currentPkg = p
+                vulkan = detectVulkan(p)
+                layer = null
+                resetLayer()
+                Log.d(TAG, "paket game: $p (vulkan=$vulkan)")
+            }
+
+            var l = layer
+            if (l == null) {
+                l = resolveLayer(p)
+                layer = l
+                resetLayer()
+                Log.d(TAG, "layer untuk $p: $l")
+            }
+            if (l == null) { notifyAll(0f); return }
+
+            val fps = measure(l, elapsed)
+            if (fps <= 0) {
+                zeroCount++
+                if (zeroCount >= 2) {
+                    Log.d(TAG, "layer '$l' 0 FPS $zeroCount sampel, cari ulang")
+                    layer = null
+                    resetLayer()
+                }
+            } else {
+                zeroCount = 0
+            }
+            notifyAll(fps.toFloat())
+        } catch (e: Exception) {
+            Log.e(TAG, "tick gagal", e)
+        }
     }
 
-    private fun findLayer(p: String): String? {
-        val r = Shell.exec("dumpsys SurfaceFlinger --list", 3000)
-        val all = r.out.lines().map { it.trim() }.filter { it.contains(p) }
-        return all.firstOrNull { it.startsWith("SurfaceView") && it.contains("BLAST") }
-            ?: all.firstOrNull { it.startsWith("SurfaceView") }
-            ?: all.firstOrNull { it.contains("BLAST") }
-            ?: all.firstOrNull()
+    private fun measure(l: String, elapsedMs: Long): Int {
+        val q = l.replace("'", "'\\''")
+        val out = Shell.exec("dumpsys SurfaceFlinger --latency '$q'", 4000).out
+        val lines = out.lines().filter { it.isNotBlank() }
+        var fps = -1
+
+        if (lines.size > 1) {
+            val ts = mutableListOf<Long>()
+            for (i in 1 until lines.size) {
+                val parts = lines[i].trim().split(Regex("\\s+"))
+                if (parts.size < 3) continue
+                val c1 = parts[1].toLongOrNull() ?: 0L
+                val c2 = parts[2].toLongOrNull() ?: 0L
+                val t = when {
+                    c1 > 0 && c1 != PENDING -> c1
+                    c2 > 0 && c2 != PENDING -> c2
+                    else -> 0L
+                }
+                if (t > 0) ts.add(t)
+            }
+            if (ts.isNotEmpty()) {
+                val max = ts.max()
+                if (lastPresent == 0L || max < lastPresent) {
+                    if (ts.size >= 2) {
+                        val dur = (max - ts.min()) / 1_000_000_000f
+                        if (dur in 0.01f..2.5f) fps = ((ts.size - 1) / dur).roundToInt()
+                    }
+                    lastPresent = max
+                } else {
+                    val newFrames = ts.filter { it > lastPresent }
+                    fps = ((newFrames.size * 1000f) / elapsedMs).roundToInt()
+                    if (newFrames.isNotEmpty()) lastPresent = newFrames.max()
+                }
+            }
+        }
+
+        // Cross-check counter frame (penting untuk Vulkan atau driver yang tidak mengisi --latency penuh)
+        if (fps <= 0 || vulkan) {
+            val count = frameCount(l)
+            if (count != null && count >= 0) {
+                if (lastFrameCount >= 0) {
+                    val counterFps = (((count - lastFrameCount).coerceAtLeast(0L)) * 1000f / elapsedMs).roundToInt()
+                    if (fps <= 0 && counterFps > 0) fps = counterFps
+                    else if (vulkan && counterFps > 0 && fps > 0) fps = if (abs(counterFps - fps) <= 3) fps else counterFps
+                }
+                lastFrameCount = count
+            }
+        }
+        return fps.coerceAtLeast(0)
     }
 
-    private fun compute(out: String): Float? {
-        val lines = out.lines()
-        if (lines.size < 2) return null
-        val ts = lines.drop(1).mapNotNull { l ->
-            val parts = l.trim().split(Regex("\\s+"))
-            if (parts.size >= 3) parts[1].toLongOrNull() else null
-        }.filter { it > 0L && it < Long.MAX_VALUE / 2 }
-        if (ts.isEmpty()) return null
-        val last = ts.max()
-        val now = System.nanoTime()
-        if (now - last > 1_500_000_000L) return 0f
-        return ts.count { it > last - 1_000_000_000L }.toFloat()
+    private fun frameCount(l: String): Long? {
+        val key = l.substringBefore("#").trim().replace("'", "'\\''")
+        val out = Shell.exec(
+            "dumpsys SurfaceFlinger | grep -F '$key' | grep 'frame=' | grep -v 'Background for' | head -n 3", 4000
+        ).out
+        return Regex("frame=(\\d+)").find(out)?.groupValues?.get(1)?.toLongOrNull()
+    }
+
+    private fun detectVulkan(p: String): Boolean {
+        val out = Shell.exec("dumpsys gpu | grep -F -A25 'appPackageName = $p'", 4000).out
+        return out.contains("createdVulkanSwapchain = 1") || out.contains("createdVulkanDevice = 1")
+    }
+
+    private fun renderable(layer: String, p: String): Boolean {
+        if (layer.isEmpty() || !layer.contains(p)) return false
+        val bad = listOf(
+            "ActivityRecord", "Background for", "Bounds for", "Dim layer",
+            "SnapshotStartingWindow", "Transition", "leash"
+        )
+        return bad.none { layer.contains(it) } && !layer.startsWith("Task=")
+    }
+
+    private fun clean(raw: String): String {
+        var s = raw.trim()
+        if (s.startsWith("RequestedLayerState{")) {
+            s = s.removePrefix("RequestedLayerState{")
+                .substringBefore(" parentId=").substringBefore(" relativeParentId=").substringBefore(" z=")
+                .removeSuffix("}")
+        } else if (s.startsWith("Layer [")) {
+            s = s.substringAfter("] ").trim()
+        }
+        return s.trim()
+    }
+
+    private fun pick(layers: List<String>): String? =
+        layers.lastOrNull { it.contains("SurfaceView", true) && it.contains("BLAST", true) }
+            ?: layers.lastOrNull { it.contains("SurfaceView", true) }
+            ?: layers.lastOrNull { it.contains("BLAST", true) || it.contains("BBQ", true) }
+            ?: layers.lastOrNull { !it.contains("PopupWindow") }
+            ?: layers.lastOrNull()
+
+    private fun resolveLayer(p: String): String? {
+        // 1) Output Layer: layer yang benar-benar sedang ditampilkan SurfaceFlinger
+        try {
+            val esc = p.replace(".", "\\.")
+            val sf = Shell.exec("dumpsys SurfaceFlinger | grep -E 'Output Layer.*$esc' | head -n 20", 5000).out
+            val rx = Regex("Output Layer.*?\\((.*?" + Regex.escape(p) + ".*?)\\)")
+            val cands = rx.findAll(sf).map { it.groupValues[1].trim() }.filter { renderable(it, p) }.toList()
+            pick(cands)?.let { return it }
+        } catch (e: Exception) {
+            Log.w(TAG, "scan Output Layer gagal", e)
+        }
+        // 2) Fallback: --list
+        val list = Shell.exec("dumpsys SurfaceFlinger --list | grep -F '$p'", 4000).out
+        val layers = list.lines().map { clean(it) }.filter { renderable(it, p) }
+        return pick(layers)
     }
 }
