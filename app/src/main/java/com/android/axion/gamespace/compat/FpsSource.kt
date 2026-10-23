@@ -39,6 +39,7 @@ object FpsSource {
     private var lastPresent = 0L
     private var lastFrameCount = -1L
     private var zeroCount = 0
+    private val badLayers = HashMap<String, Long>() // layer -> waktu kedaluwarsa (ms, elapsedRealtime)
 
     @Synchronized
     fun register(cb: TaskFpsCallback, gamePackage: String?) {
@@ -64,7 +65,7 @@ object FpsSource {
     }
 
     private fun resetAll() {
-        currentPkg = null; layer = null; lastSample = 0L; resetLayer()
+        currentPkg = null; layer = null; lastSample = 0L; resetLayer(); badLayers.clear()
     }
 
     private fun notifyAll(fps: Float) {
@@ -75,7 +76,11 @@ object FpsSource {
         try {
             val p = gamePackage ?: pkg
             if (p == null) { Log.d(TAG, "tick: paket game belum diketahui"); return }
-            if (!Shell.available()) { Log.w(TAG, "tick: Shizuku/root belum tersedia"); return }
+            if (!Shell.available()) {
+                val st = Shell.status.value
+                Log.w(TAG, "tick: Shell belum tersedia (backend=${st.backend}, shizukuRunning=${st.shizukuRunning}, granted=${st.shizukuGranted}, root=${st.rootAvailable})")
+                return
+            }
 
             val now = SystemClock.elapsedRealtime()
             val elapsed = if (lastSample == 0L) 1000L else (now - lastSample).coerceAtLeast(1L)
@@ -96,19 +101,21 @@ object FpsSource {
                 resetLayer()
                 Log.d(TAG, "layer untuk $p: $l")
             }
-            if (l == null) { notifyAll(0f); return }
+            if (l == null) { Log.d(TAG, "belum ada layer valid untuk $p"); notifyAll(0f); return }
 
             val fps = measure(l, elapsed)
             if (fps <= 0) {
                 zeroCount++
                 if (zeroCount >= 2) {
-                    Log.d(TAG, "layer '$l' 0 FPS $zeroCount sampel, cari ulang")
+                    Log.d(TAG, "layer '$l' 0 FPS $zeroCount sampel, dikecualikan 10 dtk lalu cari ulang")
+                    badLayers[l] = now + 10_000L
                     layer = null
                     resetLayer()
                 }
             } else {
                 zeroCount = 0
             }
+            Log.d(TAG, "fps=$fps layer=$l listeners=${listeners.size}")
             notifyAll(fps.toFloat())
         } catch (e: Exception) {
             Log.e(TAG, "tick gagal", e)
@@ -200,27 +207,55 @@ object FpsSource {
         return s.trim()
     }
 
-    private fun pick(layers: List<String>): String? =
-        layers.lastOrNull { it.contains("SurfaceView", true) && it.contains("BLAST", true) }
-            ?: layers.lastOrNull { it.contains("SurfaceView", true) }
-            ?: layers.lastOrNull { it.contains("BLAST", true) || it.contains("BBQ", true) }
-            ?: layers.lastOrNull { !it.contains("PopupWindow") }
-            ?: layers.lastOrNull()
+    private fun priority(l: String): Int = when {
+        l.contains("SurfaceView", true) && l.contains("BLAST", true) -> 0
+        l.contains("SurfaceView", true) -> 1
+        l.contains("BLAST", true) || l.contains("BBQ", true) -> 2
+        !l.contains("PopupWindow") -> 3
+        else -> 4
+    }
 
-    private fun resolveLayer(p: String): String? {
-        // 1) Output Layer: layer yang benar-benar sedang ditampilkan SurfaceFlinger
+    /** Kandidat layer: "Output Layer" (nama penuh, termasuk tanda kurung di dalamnya) lalu `--list`. */
+    private fun candidates(p: String): List<String> {
+        val found = LinkedHashSet<String>()
         try {
             val esc = p.replace(".", "\\.")
-            val sf = Shell.exec("dumpsys SurfaceFlinger | grep -E 'Output Layer.*$esc' | head -n 20", 5000).out
-            val rx = Regex("Output Layer.*?\\((.*?" + Regex.escape(p) + ".*?)\\)")
-            val cands = rx.findAll(sf).map { it.groupValues[1].trim() }.filter { renderable(it, p) }.toList()
-            pick(cands)?.let { return it }
+            val sf = Shell.exec("dumpsys SurfaceFlinger | grep -E 'Output Layer.*$esc' | head -n 30", 5000).out
+            // Ambil sampai kurung tutup TERAKHIR agar nama seperti "...(BLAST)#123" tidak terpotong.
+            val rx = Regex("Output Layer[^(]*\\((.*)\\)\\s*$")
+            sf.lines().forEach { line ->
+                rx.find(line.trim())?.groupValues?.get(1)?.trim()?.let { if (renderable(it, p)) found.add(it) }
+            }
         } catch (e: Exception) {
             Log.w(TAG, "scan Output Layer gagal", e)
         }
-        // 2) Fallback: --list
         val list = Shell.exec("dumpsys SurfaceFlinger --list | grep -F '$p'", 4000).out
-        val layers = list.lines().map { clean(it) }.filter { renderable(it, p) }
-        return pick(layers)
+        list.lines().map { clean(it) }.filter { renderable(it, p) }.forEach { found.add(it) }
+        // Layer terbaru biasanya paling belakang; urutkan stabil berdasar prioritas.
+        return found.toList().reversed().sortedBy { priority(it) }
+    }
+
+    /** Layer valid jika `--latency` mengembalikan baris timestamp (nama harus persis). */
+    private fun hasLatency(l: String): Boolean {
+        val q = l.replace("'", "'\\''")
+        val out = Shell.exec("dumpsys SurfaceFlinger --latency '$q'", 4000).out
+        val rows = out.lines().filter { it.isNotBlank() }.drop(1)
+        return rows.any { row ->
+            val parts = row.trim().split(Regex("\\s+"))
+            parts.size >= 3 && (parts[1].toLongOrNull() ?: 0L).let { it > 0 && it != PENDING }
+        }
+    }
+
+    private fun resolveLayer(p: String): String? {
+        val now = SystemClock.elapsedRealtime()
+        badLayers.entries.removeAll { it.value <= now }
+        val cands = candidates(p)
+        Log.d(TAG, "kandidat layer ($p): $cands, dikecualikan: ${badLayers.keys}")
+        for (c in cands) {
+            if (badLayers.containsKey(c)) continue
+            if (hasLatency(c)) return c
+            Log.d(TAG, "kandidat tanpa data --latency: $c")
+        }
+        return null
     }
 }

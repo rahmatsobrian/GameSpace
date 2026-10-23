@@ -65,7 +65,7 @@ class GameWatcherService : Service() {
         Shell.init(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CH, getString(R.string.settings_title), NotificationManager.IMPORTANCE_MIN)
+            NotificationChannel(CH, getString(R.string.settings_title), NotificationManager.IMPORTANCE_LOW)
         )
         val open = PendingIntent.getActivity(
             this, 0, Intent(this, SettingsActivity::class.java), PendingIntent.FLAG_IMMUTABLE
@@ -100,10 +100,12 @@ class GameWatcherService : Service() {
         val target = pkg?.takeIf { it in games }
         if (target != active) {
             if (active != null) {
+                android.util.Log.i("GSWatcher", "game ditinggalkan: $active")
                 stopService(Intent(this, SessionService::class.java))
                 active = null
             }
             if (target != null) {
+                android.util.Log.i("GSWatcher", "game terdeteksi: $target (shell=${Shell.available()})")
                 active = target
                 try {
                     startService(
@@ -159,7 +161,7 @@ class GameWatcherService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     companion object {
-        private const val CH = "gamespace_watcher"
+        private const val CH = "gamespace_watcher_v2"
 
         fun start(ctx: Context) {
             try {

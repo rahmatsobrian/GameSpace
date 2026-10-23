@@ -47,16 +47,28 @@ object Shell {
     private val _status = MutableStateFlow(ShellStatus())
     val status: StateFlow<ShellStatus> get() = _status
 
+    @Volatile private var bindingSince = 0L
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
             if (binder != null && binder.pingBinder()) {
                 service = IShellService.Stub.asInterface(binder)
+                bindingSince = 0L
+                android.util.Log.i("GSShell", "ShellService terhubung")
                 refresh()
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            android.util.Log.w("GSShell", "ShellService terputus")
             service = null
+            bindingSince = 0L
+            refresh()
+        }
+
+        override fun onBindingDied(name: ComponentName?) {
+            service = null
+            bindingSince = 0L
             refresh()
         }
     }
@@ -117,8 +129,12 @@ object Shell {
 
     private fun bind() {
         if (service != null) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (bindingSince != 0L && now - bindingSince < 5000L) return // sedang menunggu koneksi
         try {
             if (!shizukuGranted()) return
+            bindingSince = now
+            android.util.Log.i("GSShell", "bindUserService dipanggil")
             val args = Shizuku.UserServiceArgs(
                 ComponentName(appContext.packageName, ShellService::class.java.name)
             ).daemon(false)
@@ -138,13 +154,21 @@ object Shell {
         } catch (_: Exception) { false }
     }
 
-    fun available(): Boolean = service != null || rootOk
+    /** Jika service Shizuku belum/tidak lagi terhubung tetapi izin sudah ada, coba bind ulang. */
+    fun available(): Boolean {
+        if (service == null && initialized) bind()
+        return service != null || rootOk
+    }
 
     /** Blocking. Jangan dipanggil dari main thread. */
     fun exec(command: String, timeoutMs: Int = 8000): ShellResult {
         service?.let { svc ->
             return try {
                 parse(svc.exec(command, timeoutMs))
+            } catch (e: android.os.DeadObjectException) {
+                service = null // binder mati: biarkan available() melakukan bind ulang
+                bindingSince = 0L
+                ShellResult(-1, "binder mati")
             } catch (e: Exception) {
                 ShellResult(-1, e.message ?: "binder error")
             }
