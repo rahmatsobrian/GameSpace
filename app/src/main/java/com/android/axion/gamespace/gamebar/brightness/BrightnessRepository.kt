@@ -32,8 +32,6 @@ import javax.inject.Singleton
 class BrightnessRepository @Inject constructor(private val context: Context) {
 
     private val contentResolver: ContentResolver = context.contentResolver
-    private val displayManager: DisplayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
-    private val display: Display? = context.display
 
     private val _brightnessInfo = MutableStateFlow<BrightnessInfo?>(null)
     val brightnessInfo: StateFlow<BrightnessInfo?> = _brightnessInfo

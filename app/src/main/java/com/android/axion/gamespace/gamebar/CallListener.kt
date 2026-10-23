@@ -109,12 +109,16 @@ class CallListener @Inject constructor(
     }
 
     fun init() {
-        telephonyManager.registerTelephonyCallback(context.mainExecutor, telephonyCallback)
+        try {
+            telephonyManager.registerTelephonyCallback(context.mainExecutor, telephonyCallback)
+        } catch (e: SecurityException) {
+            android.util.Log.w("CallListener", "READ_PHONE_STATE belum diberikan", e)
+        }
         telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE)
     }
 
     fun destroy() {
-        telephonyManager.unregisterTelephonyCallback(telephonyCallback)
+        try { telephonyManager.unregisterTelephonyCallback(telephonyCallback) } catch (_: Exception) {}
         dismissRingerOverlay(immediate = true)
         telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE)
     }

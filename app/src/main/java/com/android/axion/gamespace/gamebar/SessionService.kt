@@ -84,9 +84,9 @@ class SessionService : Hilt_SessionService() {
 
         if (key != null && key.endsWith(AppSettings.KEY_MUSIC_PLAYER_ENABLED)) {
             if (appSettings.musicPlayerEnabled) {
-                musicController.register()
+                safe("music.register") { musicController.register() }
             } else {
-                musicController.unregister()
+                safe("music.unregister") { musicController.unregister() }
                 // Force state reset so card hides when disabled
                 musicController.hasActiveMedia.value = false
             }
@@ -94,10 +94,19 @@ class SessionService : Hilt_SessionService() {
 
         if (key != null && key.endsWith(AppSettings.KEY_FPS_GRAPH_ENABLED)) {
             if (appSettings.fpsGraphEnabled) {
-                fpsInteractor.start()
+                safe("fps.start") { fpsInteractor.start() }
             } else {
                 fpsInteractor.dispose()
             }
+        }
+    }
+
+    /** Versi universal: izin bisa belum diberikan di ROM biasa, jadi satu langkah gagal tidak boleh membatalkan sidebar. */
+    private inline fun safe(what: String, block: () -> Unit) {
+        try {
+            block()
+        } catch (e: Throwable) {
+            Log.e(TAG, "$what failed", e)
         }
     }
 
@@ -145,7 +154,7 @@ class SessionService : Hilt_SessionService() {
             mapperController = mapperController,
             musicController = musicController,
         )
-        sidebar.onCreate()
+        safe("sidebar.onCreate") { sidebar.onCreate() }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -179,15 +188,17 @@ class SessionService : Hilt_SessionService() {
         Log.i(TAG, "Starting game session for $packageName")
         currentPackage = packageName
         
-        session.unregister()
-        session.register(packageName)
+        safe("session.register") {
+            session.unregister()
+            session.register(packageName)
+        }
         StayAwake.enabled = settings.stayAwake
         StayAwake.sessionActive = true
         StayAwake.update(this)
         
-        applyGameModeConfig(packageName)
+        safe("gameMode") { applyGameModeConfig(packageName) }
         
-        applyAutoDnd()
+        safe("autoDnd") { applyAutoDnd() }
 
         appSettings.activeGamePackage = packageName
         FpsSource.gamePackage = packageName
@@ -195,17 +206,17 @@ class SessionService : Hilt_SessionService() {
         crosshairTile?.state?.value = appSettings.crosshairEnabled
 
         if (appSettings.musicPlayerEnabled) {
-            musicController.register()
+            safe("music.register") { musicController.register() }
         }
 
         appSettings.registerListener(preferenceListener)
-        crosshairController.updateState()
+        safe("crosshair") { crosshairController.updateState() }
 
-        sidebar.onGameStart(packageName)
+        safe("sidebar.onGameStart") { sidebar.onGameStart(packageName) }
 
-        callListener.init()
+        safe("callListener.init") { callListener.init() }
         if (appSettings.fpsGraphEnabled) {
-            fpsInteractor.start()
+            safe("fps.start") { fpsInteractor.start() }
         }
     }
 
@@ -216,13 +227,13 @@ class SessionService : Hilt_SessionService() {
         appSettings.activeGamePackage = null
         FpsSource.gamePackage = null
         crosshairController.hideCrosshair()
-        musicController.unregister()
+        safe("music.unregister") { musicController.unregister() }
 
-        sidebar.onGameLeave()
-        session.unregister()
-        callListener.destroy()
+        safe("sidebar.onGameLeave") { sidebar.onGameLeave() }
+        safe("session.unregister") { session.unregister() }
+        safe("callListener.destroy") { callListener.destroy() }
         fpsInteractor.dispose()
-        restoreAutoDnd()
+        safe("restoreDnd") { restoreAutoDnd() }
         StayAwake.sessionActive = false
         StayAwake.update(this)
         currentPackage = null

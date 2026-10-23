@@ -72,7 +72,7 @@ class GameSession @Inject constructor(
             systemSettings.threeScreenshot = 0
         }
         if (appSettings.ringerMode != 3) {
-            audioManager.ringerMode = appSettings.ringerMode
+            try { audioManager.ringerMode = appSettings.ringerMode } catch (_: SecurityException) {}
         }
     }
 
@@ -88,7 +88,7 @@ class GameSession @Inject constructor(
             systemSettings.threeScreenshot = orig.threeScreenshot
         }
         if (appSettings.ringerMode != 3) {
-            audioManager.ringerMode = orig.ringerMode
+            try { audioManager.ringerMode = orig.ringerMode } catch (_: SecurityException) {}
         }
         state = null
     }
