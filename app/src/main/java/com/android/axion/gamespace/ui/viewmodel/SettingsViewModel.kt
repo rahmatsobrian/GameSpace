@@ -259,4 +259,49 @@ class SettingsViewModel @Inject constructor(
         GameModeUtils.DRIVER_CHOICE_ANGLE to "ANGLE",
         GameModeUtils.DRIVER_CHOICE_NATIVE to "Native"
     )
+
+    // ---- Fitur tambahan: performa, power, pengingat istirahat ----
+    var autoBoostMemory by mutableStateOf(appSettings.autoBoostMemory)
+        private set
+
+    fun updateAutoBoostMemory(enabled: Boolean) {
+        autoBoostMemory = enabled
+        appSettings.autoBoostMemory = enabled
+    }
+
+    val supportedRefreshRates: List<Int> by lazy {
+        com.android.axion.gamespace.compat.RefreshRate.supported(context).filter { it >= 60 }
+    }
+
+    var refreshRateLock by mutableIntStateOf(appSettings.refreshRateLock)
+        private set
+
+    fun updateRefreshRateLock(hz: Int) {
+        refreshRateLock = hz
+        appSettings.refreshRateLock = hz
+    }
+
+    var breakReminderMinutes by mutableIntStateOf(appSettings.breakReminderMinutes)
+        private set
+
+    fun updateBreakReminder(minutes: Int) {
+        breakReminderMinutes = minutes
+        appSettings.breakReminderMinutes = minutes
+    }
+
+    var chargeLimitEnabled by mutableStateOf(appSettings.chargeLimitEnabled)
+        private set
+
+    fun updateChargeLimitEnabled(enabled: Boolean) {
+        chargeLimitEnabled = enabled
+        appSettings.chargeLimitEnabled = enabled
+    }
+
+    var chargeLimit by mutableFloatStateOf(appSettings.chargeLimit.toFloat())
+        private set
+
+    fun updateChargeLimit(percent: Float) {
+        chargeLimit = percent
+        appSettings.chargeLimit = percent.toInt()
+    }
 }

@@ -54,13 +54,11 @@ object Shell {
             if (binder != null && binder.pingBinder()) {
                 service = IShellService.Stub.asInterface(binder)
                 bindingSince = 0L
-                android.util.Log.i("GSShell", "ShellService terhubung")
                 refresh()
             }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            android.util.Log.w("GSShell", "ShellService terputus")
             service = null
             bindingSince = 0L
             refresh()
@@ -134,7 +132,6 @@ object Shell {
         try {
             if (!shizukuGranted()) return
             bindingSince = now
-            android.util.Log.i("GSShell", "bindUserService dipanggil")
             val args = Shizuku.UserServiceArgs(
                 ComponentName(appContext.packageName, ShellService::class.java.name)
             ).daemon(false)

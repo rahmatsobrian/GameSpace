@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fps_low_ping">1%% low %1$d  |  ping %2$s</string>
+
+    <string name="section_performance">Performance</string>
+    <string name="auto_boost_memory_title">Auto-clean RAM</string>
+    <string name="auto_boost_memory_summary">Clear background apps when a game starts. Requires Shizuku or root.</string>
+    <string name="refresh_rate_lock_title">Refresh rate lock</string>
+    <string name="refresh_rate_auto">Auto</string>
+    <string name="tile_refresh_rate">Refresh rate</string>
+    <string name="break_reminder_title">Break reminder</string>
+    <string name="break_reminder_off">Off</string>
+    <string name="break_reminder_minutes">Every %1$d minutes</string>
+    <string name="break_reminder_message">You\'ve been playing for %1$d minutes. Time for a break!</string>
+    <string name="charge_limit_title">Charge limit while gaming</string>
+    <string name="charge_limit_summary">Pause charging at the chosen level during a game session. Requires a writable charging node (root).</string>
+    <string name="charge_limit_level_title">Charge limit level</string>
+
+    <string name="profile_section">Game profile</string>
+    <string name="profile_use_global">Use global setting</string>
+    <string name="profile_refresh_title">Refresh rate</string>
+    <string name="profile_ram_title">Auto-clean RAM</string>
+    <string name="profile_on">On</string>
+    <string name="profile_off">Off</string>
+    <string name="profile_brightness_title">Brightness on start</string>
+    <string name="profile_no_change">No change</string>
+
+    <string name="play_stats_title">Play stats</string>
+    <string name="play_stats_empty">No sessions recorded yet. Sessions shorter than 30 seconds are ignored.</string>
+    <string name="stat_total_time">Total playtime</string>
+    <string name="stat_sessions">Sessions</string>
+    <string name="stat_avg_fps">Average FPS</string>
+    <string name="stat_low1" formatted="false">1% low FPS (average)</string>
+    <string name="stat_max_temp">Peak temperature</string>
+    <string name="stat_last">Last session</string>
+    <string name="stat_last_duration">Last session length</string>
+    <string name="stat_battery_used">Battery used (last session)</string>
+    <string name="stat_duration_hm">%1$dh %2$dm</string>
+    <string name="stat_duration_m">%1$dm</string>
+</resources>

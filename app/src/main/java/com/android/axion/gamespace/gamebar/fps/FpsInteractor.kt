@@ -46,6 +46,12 @@ class FpsInteractor @Inject constructor(private val context: Context) {
         wm.defaultDisplay?.mode?.refreshRate ?: 60f
     }
 
+    private val _low1Percent = MutableStateFlow(0f)
+    val low1Percent: StateFlow<Float> get() = _low1Percent
+
+    private val rawLock = Any()
+    private val rawBuffer = ArrayDeque<Float>(600)
+
     private val historySize = 100
     private val buffer = ArrayDeque<Float>(historySize)
 
@@ -62,6 +68,17 @@ class FpsInteractor @Inject constructor(private val context: Context) {
             fpsFlow
                 .sample(1000) 
                 .map { fps ->
+                    synchronized(rawLock) {
+                        if (fps > 0f) {
+                            if (rawBuffer.size >= 600) rawBuffer.removeFirst()
+                            rawBuffer.addLast(fps)
+                        }
+                        if (rawBuffer.isNotEmpty()) {
+                            val sorted = rawBuffer.sorted()
+                            val n = maxOf(1, (sorted.size * 0.01f).toInt())
+                            _low1Percent.value = sorted.take(n).average().toFloat()
+                        }
+                    }
                     val smoothed = (buffer.lastOrNull() ?: fps) * 0.75f + fps * 0.25f
                     if (buffer.size >= historySize) buffer.removeFirst()
                     buffer.addLast(smoothed)
@@ -77,10 +94,14 @@ class FpsInteractor @Inject constructor(private val context: Context) {
     }
 
     fun start() {
+        synchronized(rawLock) { rawBuffer.clear() }
+        _low1Percent.value = 0f
+        com.android.axion.gamespace.compat.PingMonitor.start()
         FpsSource.register(fpsCallback, null)
     }
 
     fun dispose() {
+        com.android.axion.gamespace.compat.PingMonitor.stop()
         FpsSource.unregister(fpsCallback)
     }
 }

@@ -17,6 +17,7 @@ package com.android.axion.gamespace.gamebar.tiles
 
 import com.android.axion.gamespace.compat.HwNodes
 import com.android.axion.gamespace.compat.MemoryBooster
+import com.android.axion.gamespace.compat.RefreshRate
 import com.android.axion.gamespace.shell.Shell
 import android.content.Context
 import android.content.Intent
@@ -300,6 +301,10 @@ class TileRepository @Inject constructor(
                 },
             )
         )
+
+        if (RefreshRate.supported(context).count { it >= 60 } > 1) {
+            add(RefreshRateTile(context))
+        }
 
         if (HwNodes.isSupported(context, HwNodes.Kind.TOUCH)) {
             val touchBoostState = mutableStateOf(

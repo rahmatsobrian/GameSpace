@@ -125,6 +125,45 @@ fun PerAppSettingsScreen(
                 )
             }
 
+            val globalLabel = stringResource(R.string.profile_use_global)
+            val autoLabel = stringResource(R.string.refresh_rate_auto)
+            val onLabel = stringResource(R.string.profile_on)
+            val offLabel = stringResource(R.string.profile_off)
+            val noChangeLabel = stringResource(R.string.profile_no_change)
+            val refreshOptions = listOf("-1" to globalLabel, "0" to autoLabel) +
+                viewModel.supportedRefreshRates.map { it.toString() to "$it Hz" }
+            val ramOptions = listOf("-1" to globalLabel, "1" to onLabel, "0" to offLabel)
+            val brightnessOptions = listOf("-1" to noChangeLabel) +
+                listOf(25, 50, 75, 100).map { it.toString() to "$it%" }
+
+            SettingsSection(title = stringResource(R.string.profile_section)) {
+                if (viewModel.supportedRefreshRates.size > 1) {
+                    SettingsDropdown(
+                        title = stringResource(R.string.profile_refresh_title),
+                        selectedValue = viewModel.profileRefresh.toString(),
+                        options = refreshOptions,
+                        onValueChange = { viewModel.updateProfileRefresh(it.toIntOrNull() ?: -1) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_phone_android_rounded_filled)
+                    )
+                }
+                SettingsDropdown(
+                    title = stringResource(R.string.profile_ram_title),
+                    selectedValue = viewModel.profileRam.toString(),
+                    options = ramOptions,
+                    onValueChange = { viewModel.updateProfileRam(it.toIntOrNull() ?: -1) },
+                    icon = painterResource(R.drawable.materialsymbols_ic_speed_rounded_filled)
+                )
+                SettingsDropdown(
+                    title = stringResource(R.string.profile_brightness_title),
+                    selectedValue = viewModel.profileBrightness.toString(),
+                    options = brightnessOptions,
+                    onValueChange = { viewModel.updateProfileBrightness(it.toIntOrNull() ?: -1) },
+                    icon = painterResource(R.drawable.materialsymbols_ic_brightness_6_rounded_filled)
+                )
+            }
+            SettingsSection(title = stringResource(R.string.play_stats_title)) {
+                PlayStatsCard(summary = viewModel.playSummary)
+            }
             if (viewModel.angleFeatureAvailable) {
                 SettingsSection(title = stringResource(R.string.graphics)) {
                     SettingsDropdown(

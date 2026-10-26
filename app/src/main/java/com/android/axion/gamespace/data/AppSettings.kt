@@ -139,6 +139,26 @@ class AppSettings @Inject constructor(private val context: Context) {
         get() = db.getInt(getPrefKey(KEY_CROSSHAIR_OFFSET_Y), db.getInt(KEY_CROSSHAIR_OFFSET_Y, 0))
         set(value) = db.edit().putInt(getPrefKey(KEY_CROSSHAIR_OFFSET_Y), value).apply()
 
+    var autoBoostMemory: Boolean
+        get() = db.getBoolean(KEY_AUTO_BOOST_MEMORY, false)
+        set(value) = db.edit().putBoolean(KEY_AUTO_BOOST_MEMORY, value).apply()
+
+    var refreshRateLock: Int
+        get() = db.getInt(KEY_REFRESH_RATE_LOCK, 0)
+        set(value) = db.edit().putInt(KEY_REFRESH_RATE_LOCK, value).apply()
+
+    var chargeLimitEnabled: Boolean
+        get() = db.getBoolean(KEY_CHARGE_LIMIT_ENABLED, false)
+        set(value) = db.edit().putBoolean(KEY_CHARGE_LIMIT_ENABLED, value).apply()
+
+    var chargeLimit: Int
+        get() = db.getInt(KEY_CHARGE_LIMIT, 80)
+        set(value) = db.edit().putInt(KEY_CHARGE_LIMIT, value).apply()
+
+    var breakReminderMinutes: Int
+        get() = db.getInt(KEY_BREAK_REMINDER, 0)
+        set(value) = db.edit().putInt(KEY_BREAK_REMINDER, value).apply()
+
     var musicPlayerEnabled: Boolean
         get() = db.getBoolean(KEY_MUSIC_PLAYER_ENABLED, true)
         set(value) = db.edit().putBoolean(KEY_MUSIC_PLAYER_ENABLED, value).apply()
@@ -167,5 +187,10 @@ class AppSettings @Inject constructor(private val context: Context) {
         const val KEY_CROSSHAIR_OFFSET_X = "gamespace_crosshair_offset_x"
         const val KEY_CROSSHAIR_OFFSET_Y = "gamespace_crosshair_offset_y"
         const val KEY_MUSIC_PLAYER_ENABLED = "gamespace_music_player_enabled"
+        const val KEY_AUTO_BOOST_MEMORY = "gamespace_auto_boost_memory"
+        const val KEY_REFRESH_RATE_LOCK = "gamespace_refresh_rate_lock"
+        const val KEY_CHARGE_LIMIT_ENABLED = "gamespace_charge_limit_enabled"
+        const val KEY_CHARGE_LIMIT = "gamespace_charge_limit"
+        const val KEY_BREAK_REMINDER = "gamespace_break_reminder_minutes"
     }
 }

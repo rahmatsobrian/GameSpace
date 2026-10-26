@@ -425,6 +425,46 @@ fun SettingsScreen(
             }
 
             item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = stringResource(R.string.section_performance)) {
+                    val autoLabel = stringResource(R.string.refresh_rate_auto)
+                    val refreshOptions = listOf("0" to autoLabel) +
+                        viewModel.supportedRefreshRates.map { it.toString() to "$it Hz" }
+                    val breakOffLabel = stringResource(R.string.break_reminder_off)
+                    val breakOptions = listOf("0" to breakOffLabel) +
+                        listOf(30, 45, 60, 90).map {
+                            it.toString() to stringResource(R.string.break_reminder_minutes, it)
+                        }
+
+                    SettingsSwitch(
+                        title = stringResource(R.string.auto_boost_memory_title),
+                        summary = stringResource(R.string.auto_boost_memory_summary),
+                        checked = viewModel.autoBoostMemory,
+                        onCheckedChange = { viewModel.updateAutoBoostMemory(it) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_speed_rounded_filled)
+                    )
+
+                    if (viewModel.supportedRefreshRates.size > 1) {
+                        SettingsDropdown(
+                            title = stringResource(R.string.refresh_rate_lock_title),
+                            selectedValue = viewModel.refreshRateLock.toString(),
+                            options = refreshOptions,
+                            onValueChange = { viewModel.updateRefreshRateLock(it.toIntOrNull() ?: 0) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_phone_android_rounded_filled)
+                        )
+                    }
+
+                    SettingsDropdown(
+                        title = stringResource(R.string.break_reminder_title),
+                        selectedValue = viewModel.breakReminderMinutes.toString(),
+                        options = breakOptions,
+                        onValueChange = { viewModel.updateBreakReminder(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_local_cafe_rounded_filled)
+                    )
+                }
+            }
+
+            item {
                 if (viewModel.isBypassSupported) {
                     Spacer(modifier = Modifier.height(16.dp))
                     SettingsSection(title = "Power") {
@@ -435,6 +475,26 @@ fun SettingsScreen(
                             onCheckedChange = { viewModel.updateBypassChargeEnabled(it) },
                             icon = Icons.Rounded.BatteryChargingFull
                         )
+
+                        SettingsSwitch(
+                            title = stringResource(R.string.charge_limit_title),
+                            summary = stringResource(R.string.charge_limit_summary),
+                            checked = viewModel.chargeLimitEnabled,
+                            onCheckedChange = { viewModel.updateChargeLimitEnabled(it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_battery_charging_full_rounded_filled)
+                        )
+
+                        if (viewModel.chargeLimitEnabled) {
+                            SettingsSlider(
+                                title = stringResource(R.string.charge_limit_level_title),
+                                value = viewModel.chargeLimit,
+                                onValueChange = { viewModel.updateChargeLimit(it) },
+                                valueRange = 50f..95f,
+                                steps = 8,
+                                valueLabel = "${viewModel.chargeLimit.toInt()}%",
+                                icon = painterResource(R.drawable.materialsymbols_ic_battery_charging_full_rounded_filled)
+                            )
+                        }
                     }
                 }
             }

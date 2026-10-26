@@ -29,3 +29,13 @@ Ikon Material Symbols diunduh saat build (lihat `generateSymbols` di `app/build.
 
 ## Catatan
 Perubahan dari versi asli dan keterbatasannya ada di balasan yang menyertai file ini.
+
+## Fitur tambahan (versi universal)
+- Ping jaringan dan 1% low FPS di panel (kartu FPS).
+- Kunci refresh rate (Settings > Performance, tile "Refresh rate", dan per-game).
+- Auto-bersihkan RAM saat game mulai (global atau per-game).
+- Batas pengisian saat bermain (Settings > Power, butuh node charge yang bisa ditulis).
+- Statistik sesi dan riwayat bermain (halaman pengaturan tiap game).
+- Profil per-game: refresh rate, auto-RAM, kecerahan awal.
+- Timer sesi di header panel dan pengingat istirahat (Settings > Performance).
+Crosshair kustom (gaya, warna, ukuran, opasitas, posisi) sudah ada di aplikasi asli.

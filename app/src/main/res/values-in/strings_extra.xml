@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fps_low_ping">1%% low %1$d  |  ping %2$s</string>
+
+    <string name="section_performance">Performa</string>
+    <string name="auto_boost_memory_title">Bersihkan RAM otomatis</string>
+    <string name="auto_boost_memory_summary">Tutup aplikasi latar saat game dimulai. Butuh Shizuku atau root.</string>
+    <string name="refresh_rate_lock_title">Kunci refresh rate</string>
+    <string name="refresh_rate_auto">Otomatis</string>
+    <string name="tile_refresh_rate">Refresh rate</string>
+    <string name="break_reminder_title">Pengingat istirahat</string>
+    <string name="break_reminder_off">Mati</string>
+    <string name="break_reminder_minutes">Setiap %1$d menit</string>
+    <string name="break_reminder_message">Kamu sudah bermain %1$d menit. Waktunya istirahat sebentar!</string>
+    <string name="charge_limit_title">Batas pengisian saat bermain</string>
+    <string name="charge_limit_summary">Jeda pengisian di level yang dipilih selama sesi game. Butuh node pengisian yang bisa ditulis (root).</string>
+    <string name="charge_limit_level_title">Level batas pengisian</string>
+
+    <string name="profile_section">Profil game</string>
+    <string name="profile_use_global">Ikuti pengaturan global</string>
+    <string name="profile_refresh_title">Refresh rate</string>
+    <string name="profile_ram_title">Bersihkan RAM otomatis</string>
+    <string name="profile_on">Hidup</string>
+    <string name="profile_off">Mati</string>
+    <string name="profile_brightness_title">Kecerahan saat mulai</string>
+    <string name="profile_no_change">Tidak diubah</string>
+
+    <string name="play_stats_title">Statistik bermain</string>
+    <string name="play_stats_empty">Belum ada sesi tercatat. Sesi di bawah 30 detik diabaikan.</string>
+    <string name="stat_total_time">Total waktu bermain</string>
+    <string name="stat_sessions">Jumlah sesi</string>
+    <string name="stat_avg_fps">FPS rata-rata</string>
+    <string name="stat_low1" formatted="false">FPS 1% low (rata-rata)</string>
+    <string name="stat_max_temp">Suhu tertinggi</string>
+    <string name="stat_last">Sesi terakhir</string>
+    <string name="stat_last_duration">Lama sesi terakhir</string>
+    <string name="stat_battery_used">Baterai terpakai (sesi terakhir)</string>
+    <string name="stat_duration_hm">%1$dj %2$dm</string>
+    <string name="stat_duration_m">%1$dm</string>
+</resources>

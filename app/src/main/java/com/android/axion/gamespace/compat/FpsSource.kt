@@ -76,11 +76,7 @@ object FpsSource {
         try {
             val p = gamePackage ?: pkg
             if (p == null) { Log.d(TAG, "tick: paket game belum diketahui"); return }
-            if (!Shell.available()) {
-                val st = Shell.status.value
-                Log.w(TAG, "tick: Shell belum tersedia (backend=${st.backend}, shizukuRunning=${st.shizukuRunning}, granted=${st.shizukuGranted}, root=${st.rootAvailable})")
-                return
-            }
+            if (!Shell.available()) { Log.w(TAG, "tick: Shizuku/root belum tersedia"); return }
 
             val now = SystemClock.elapsedRealtime()
             val elapsed = if (lastSample == 0L) 1000L else (now - lastSample).coerceAtLeast(1L)
@@ -101,7 +97,7 @@ object FpsSource {
                 resetLayer()
                 Log.d(TAG, "layer untuk $p: $l")
             }
-            if (l == null) { Log.d(TAG, "belum ada layer valid untuk $p"); notifyAll(0f); return }
+            if (l == null) { notifyAll(0f); return }
 
             val fps = measure(l, elapsed)
             if (fps <= 0) {
@@ -115,7 +111,6 @@ object FpsSource {
             } else {
                 zeroCount = 0
             }
-            Log.d(TAG, "fps=$fps layer=$l listeners=${listeners.size}")
             notifyAll(fps.toFloat())
         } catch (e: Exception) {
             Log.e(TAG, "tick gagal", e)

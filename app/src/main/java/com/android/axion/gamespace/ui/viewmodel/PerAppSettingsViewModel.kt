@@ -52,6 +52,37 @@ class PerAppSettingsViewModel @Inject constructor(
     var angleFeatureAvailable by mutableStateOf(false)
         private set
 
+    var profileRefresh by mutableIntStateOf(-1)
+        private set
+
+    var profileRam by mutableIntStateOf(-1)
+        private set
+
+    var profileBrightness by mutableIntStateOf(-1)
+        private set
+
+    var playSummary by mutableStateOf(SessionHistory.Summary())
+        private set
+
+    val supportedRefreshRates: List<Int> by lazy {
+        com.android.axion.gamespace.compat.RefreshRate.supported(context).filter { it >= 60 }
+    }
+
+    fun updateProfileRefresh(v: Int) {
+        profileRefresh = v
+        GameProfiles.setRefreshRate(context, packageName, v)
+    }
+
+    fun updateProfileRam(v: Int) {
+        profileRam = v
+        GameProfiles.setAutoRam(context, packageName, v)
+    }
+
+    fun updateProfileBrightness(v: Int) {
+        profileBrightness = v
+        GameProfiles.setBrightness(context, packageName, v)
+    }
+
     val gameModeOptions = listOf(
         1 to "Standard",
         2 to "Performance",
@@ -79,6 +110,12 @@ class PerAppSettingsViewModel @Inject constructor(
         val hasVulkan = gameModeUtils.isVulkanSupported()
         angleFeatureAvailable = hasAngle && hasVulkan
         angleDriverChoice = gameModeUtils.getAngleDriverChoice(pkg)
+
+        val profile = GameProfiles.get(context, pkg)
+        profileRefresh = profile.refreshRate
+        profileRam = profile.autoRam
+        profileBrightness = profile.brightness
+        playSummary = SessionHistory.summary(context, pkg)
     }
 
     fun updatePreferredMode(mode: Int) {

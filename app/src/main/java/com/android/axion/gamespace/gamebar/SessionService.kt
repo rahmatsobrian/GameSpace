@@ -33,7 +33,14 @@ import android.view.WindowManager
 import com.android.axion.platform.AxPlatformClient
 import dagger.hilt.android.AndroidEntryPoint
 import com.google.gson.Gson
+import com.android.axion.gamespace.compat.ChargeLimiter
 import com.android.axion.gamespace.compat.FpsSource
+import com.android.axion.gamespace.compat.MemoryBooster
+import com.android.axion.gamespace.compat.RefreshRate
+import com.android.axion.gamespace.compat.SessionClock
+import com.android.axion.gamespace.compat.Sys
+import com.android.axion.gamespace.data.GameProfiles
+import com.android.axion.gamespace.shell.Shell
 import com.android.axion.gamespace.compat.StayAwake
 import com.android.axion.gamespace.data.AppSettings
 import com.android.axion.gamespace.data.GameSession
@@ -62,6 +69,31 @@ class SessionService : Hilt_SessionService() {
     @Inject lateinit var gson: Gson
 
     private var currentPackage: String? = null
+
+    private val breakHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val chargeLimiter by lazy { ChargeLimiter(this, appSettings) }
+    private val recorder by lazy { SessionRecorder(this) }
+    private var origBrightness: Int? = null
+    private var refreshApplied = false
+
+    private val breakRunnable = object : Runnable {
+        override fun run() {
+            val minutes = appSettings.breakReminderMinutes
+            if (minutes <= 0 || currentPackage == null) return
+            try {
+                android.widget.Toast.makeText(
+                    this@SessionService,
+                    getString(com.android.axion.gamespace.R.string.break_reminder_message, SessionClock.minutes()),
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+                getSystemService(android.os.Vibrator::class.java)?.vibrate(
+                    android.os.VibrationEffect.createOneShot(400, android.os.VibrationEffect.DEFAULT_AMPLITUDE)
+                )
+            } catch (_: Exception) {
+            }
+            breakHandler.postDelayed(this, minutes * 60_000L)
+        }
+    }
     private lateinit var gameManager: GameManager
     private lateinit var sidebar: GameSidebar
     private lateinit var mapperController: MapperController
@@ -218,6 +250,59 @@ class SessionService : Hilt_SessionService() {
         if (appSettings.fpsGraphEnabled) {
             safe("fps.start") { fpsInteractor.start() }
         }
+        safe("extras") { startExtras(packageName) }
+    }
+
+    /** Fitur tambahan per sesi: profil game, refresh rate, auto-RAM, batas pengisian, pengingat istirahat, statistik. */
+    private fun startExtras(pkg: String) {
+        SessionClock.begin()
+        recorder.start(pkg, appSettings.fpsGraphEnabled || appSettings.showFps)
+
+        val profile = GameProfiles.get(this, pkg)
+
+        val hz = if (profile.refreshRate >= 0) profile.refreshRate else appSettings.refreshRateLock
+        if (hz > 0) {
+            RefreshRate.apply(this, hz)
+            refreshApplied = true
+        }
+
+        val autoRam = if (profile.autoRam >= 0) profile.autoRam == 1 else appSettings.autoBoostMemory
+        if (autoRam) {
+            Shell.background {
+                try { MemoryBooster.release(this@SessionService) } catch (_: Exception) {}
+            }
+        }
+
+        if (profile.brightness > 0) {
+            origBrightness = try {
+                android.provider.Settings.System.getInt(contentResolver, android.provider.Settings.System.SCREEN_BRIGHTNESS)
+            } catch (_: Exception) { null }
+            Sys.putSystem(this, android.provider.Settings.System.SCREEN_BRIGHTNESS_MODE, "0")
+            Sys.putSystem(
+                this, android.provider.Settings.System.SCREEN_BRIGHTNESS,
+                (profile.brightness * 255 / 100).coerceIn(1, 255).toString()
+            )
+        }
+
+        chargeLimiter.start()
+
+        val minutes = appSettings.breakReminderMinutes
+        if (minutes > 0) breakHandler.postDelayed(breakRunnable, minutes * 60_000L)
+    }
+
+    private fun stopExtras() {
+        breakHandler.removeCallbacks(breakRunnable)
+        chargeLimiter.stop()
+        origBrightness?.let {
+            Sys.putSystem(this, android.provider.Settings.System.SCREEN_BRIGHTNESS, it.toString())
+        }
+        origBrightness = null
+        if (refreshApplied) {
+            RefreshRate.apply(this, 0)
+            refreshApplied = false
+        }
+        recorder.finish()
+        SessionClock.end()
     }
 
     private fun stopGameSession() {
@@ -232,6 +317,7 @@ class SessionService : Hilt_SessionService() {
         safe("sidebar.onGameLeave") { sidebar.onGameLeave() }
         safe("session.unregister") { session.unregister() }
         safe("callListener.destroy") { callListener.destroy() }
+        safe("extras.stop") { stopExtras() }
         fpsInteractor.dispose()
         safe("restoreDnd") { restoreAutoDnd() }
         StayAwake.sessionActive = false

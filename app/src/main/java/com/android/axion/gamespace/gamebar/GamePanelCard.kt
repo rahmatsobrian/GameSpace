@@ -425,6 +425,23 @@ private fun TopRowHeader(
             fontSize = 18.sp
         )
 
+        val elapsed by androidx.compose.runtime.produceState(
+            initialValue = com.android.axion.gamespace.compat.SessionClock.text()
+        ) {
+            while (true) {
+                value = com.android.axion.gamespace.compat.SessionClock.text()
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+        if (elapsed.isNotEmpty()) {
+            Text(
+                text = elapsed,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 10.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         IconButton(
@@ -1017,6 +1034,8 @@ fun FpsGraph(
 ) {
     val fpsHistory by interactor.fpsHistory.collectAsState(initial = emptyList())
     val maxFps by interactor.dynamicMaxFps.collectAsState()
+    val low1 by interactor.low1Percent.collectAsState()
+    val ping by com.android.axion.gamespace.compat.PingMonitor.ping.collectAsState()
     
     val graphData = remember(fpsHistory, maxFps) {
         if (fpsHistory.isNotEmpty()) {
@@ -1122,11 +1141,22 @@ fun FpsGraph(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val (minFps, avgFps, maxFpsSeen) = graphData.first
-            Text(
-                text = stringResource(R.string.fps_stats, minFps.toInt(), avgFps.toInt(), maxFpsSeen.toInt()),
-                color = graphData.third,
-                style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
-            )
+            Column {
+                Text(
+                    text = stringResource(R.string.fps_stats, minFps.toInt(), avgFps.toInt(), maxFpsSeen.toInt()),
+                    color = graphData.third,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
+                )
+                Text(
+                    text = stringResource(
+                        R.string.fps_low_ping,
+                        low1.toInt(),
+                        if (ping >= 0) "$ping ms" else "-"
+                    ),
+                    color = graphData.third,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
+            }
         }
     }
 }
