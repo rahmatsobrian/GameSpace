@@ -17,7 +17,7 @@
     <string name="charge_limit_level_title">Level batas pengisian</string>
 
     <string name="profile_section">Profil game</string>
-    <string name="profile_use_global">Ikuti pengaturan global</string>
+    <string name="profile_use_global">Global</string>
     <string name="profile_refresh_title">Refresh rate</string>
     <string name="profile_ram_title">Bersihkan RAM otomatis</string>
     <string name="profile_on">Hidup</string>

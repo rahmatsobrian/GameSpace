@@ -1,21 +1,25 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ---------------------------------------------------------------------------
+# Aturan R8 untuk build release GameSpace Universal.
+# ---------------------------------------------------------------------------
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod,SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Shizuku: ShellService dibuat lewat refleksi oleh proses Shizuku (nama kelas harus tetap),
+# dan kelas AIDL Stub/Proxy dipakai lewat Binder.
+-keep class com.android.axion.gamespace.shell.** { *; }
+-keep class rikka.shizuku.** { *; }
+-dontwarn rikka.**
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Gson: model data diserialisasi lewat refleksi (nama field harus tetap).
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keep class com.android.axion.gamespace.data.** { *; }
+-keep class com.android.axion.gamespace.gamebar.mapper.TapMapping { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Komponen yang dipanggil sistem lewat nama kelas (juga sudah dijaga aturan manifest AGP).
+-keep class com.android.axion.gamespace.gamebar.DanmakuServiceListener { *; }
+
+# Peringatan kelas anotasi yang tidak ada saat runtime.
+-dontwarn javax.annotation.**
+-dontwarn org.checkerframework.**
+-dontwarn com.google.errorprone.annotations.**

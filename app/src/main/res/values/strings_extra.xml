@@ -17,7 +17,7 @@
     <string name="charge_limit_level_title">Charge limit level</string>
 
     <string name="profile_section">Game profile</string>
-    <string name="profile_use_global">Use global setting</string>
+    <string name="profile_use_global">Global</string>
     <string name="profile_refresh_title">Refresh rate</string>
     <string name="profile_ram_title">Auto-clean RAM</string>
     <string name="profile_on">On</string>

@@ -34,6 +34,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -511,6 +512,63 @@ private fun GameDetailsPanel(
                     )
                 }
 
+                val extrasContext = LocalContext.current
+                var profile by remember(game.packageName) {
+                    mutableStateOf(com.android.axion.gamespace.data.GameProfiles.get(extrasContext, game.packageName))
+                }
+                val supportedRates = remember {
+                    com.android.axion.gamespace.compat.RefreshRate.supported(extrasContext).filter { it >= 60 }
+                }
+                val playSummary = remember(game.packageName) {
+                    com.android.axion.gamespace.data.SessionHistory.summary(extrasContext, game.packageName)
+                }
+                val globalLabel = stringResource(R.string.profile_use_global)
+
+                Spacer(modifier = Modifier.height(8.dp))
+                HubSectionLabel(stringResource(R.string.profile_section))
+
+                if (supportedRates.size > 1) {
+                    HubSectionLabel(stringResource(R.string.profile_refresh_title))
+                    HubSelector(
+                        options = listOf(-1 to globalLabel, 0 to stringResource(R.string.refresh_rate_auto)) +
+                            supportedRates.map { it to "$it Hz" },
+                        selectedKey = profile.refreshRate,
+                        onSelect = { v ->
+                            com.android.axion.gamespace.data.GameProfiles.setRefreshRate(extrasContext, game.packageName, v)
+                            profile = profile.copy(refreshRate = v)
+                        },
+                    )
+                }
+
+                HubSectionLabel(stringResource(R.string.profile_ram_title))
+                HubSelector(
+                    options = listOf(
+                        -1 to globalLabel,
+                        1 to stringResource(R.string.profile_on),
+                        0 to stringResource(R.string.profile_off),
+                    ),
+                    selectedKey = profile.autoRam,
+                    onSelect = { v ->
+                        com.android.axion.gamespace.data.GameProfiles.setAutoRam(extrasContext, game.packageName, v)
+                        profile = profile.copy(autoRam = v)
+                    },
+                )
+
+                HubSectionLabel(stringResource(R.string.profile_brightness_title))
+                HubSelector(
+                    options = listOf(-1 to stringResource(R.string.profile_no_change)) +
+                        listOf(25, 50, 75, 100).map { it to "$it%" },
+                    selectedKey = profile.brightness,
+                    onSelect = { v ->
+                        com.android.axion.gamespace.data.GameProfiles.setBrightness(extrasContext, game.packageName, v)
+                        profile = profile.copy(brightness = v)
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                HubSectionLabel(stringResource(R.string.play_stats_title))
+                HubPlayStats(playSummary)
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 HubButton(
@@ -828,12 +886,83 @@ private fun HubSectionLabel(text: String) {
 }
 
 @Composable
+private fun HubStatRow(label: String, value: String) {
+    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White.copy(alpha = 0.6f),
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelMedium,
+            color = Color.White,
+        )
+    }
+}
+
+@Composable
+private fun HubPlayStats(summary: com.android.axion.gamespace.data.SessionHistory.Summary) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.White.copy(alpha = 0.04f))
+            .border(1.dp, Color.White.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (summary.sessions == 0) {
+            Text(
+                text = stringResource(R.string.play_stats_empty),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.5f),
+            )
+        } else {
+            val hours = (summary.totalSec / 3600).toInt()
+            val minutes = ((summary.totalSec % 3600) / 60).toInt()
+            Text(
+                text = if (hours > 0) stringResource(R.string.stat_duration_hm, hours, minutes)
+                else stringResource(R.string.stat_duration_m, maxOf(minutes, 1)),
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+            )
+            Text(
+                text = stringResource(R.string.stat_total_time),
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White.copy(alpha = 0.4f),
+            )
+            HubStatRow(stringResource(R.string.stat_sessions), summary.sessions.toString())
+            if (summary.avgFps > 0) {
+                HubStatRow(stringResource(R.string.stat_avg_fps), summary.avgFps.toString())
+                HubStatRow(stringResource(R.string.stat_low1), summary.low1.toString())
+            }
+            if (summary.maxTemp > 0) {
+                HubStatRow(stringResource(R.string.stat_max_temp), "${summary.maxTemp}\u00B0C")
+            }
+            summary.last?.let { last ->
+                HubStatRow(
+                    stringResource(R.string.stat_last),
+                    java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT)
+                        .format(java.util.Date(last.startedAt)),
+                )
+                if (last.batteryDrop > 0) {
+                    HubStatRow(stringResource(R.string.stat_battery_used), "${last.batteryDrop}%")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun <T> HubSelector(
     options: List<Pair<T, String>>,
     selectedKey: T,
     onSelect: (T) -> Unit,
 ) {
     Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         options.forEach { (key, label) ->
