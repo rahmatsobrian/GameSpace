@@ -37,4 +37,100 @@
     <string name="stat_battery_used">Baterai terpakai (sesi terakhir)</string>
     <string name="stat_duration_hm">%1$dj %2$dm</string>
     <string name="stat_duration_m">%1$dm</string>
+
+    <!-- Tile baru -->
+    <string name="tile_show_touches">Tampilkan sentuhan</string>
+    <string name="tile_pointer_location">Lokasi pointer</string>
+    <string name="tile_fast_animations">Animasi cepat</string>
+    <string name="tile_haptics">Getar sentuh</string>
+    <string name="tile_mute">Bisukan media</string>
+    <string name="tile_clear_notifications">Hapus notifikasi</string>
+    <string name="tile_turbo">Turbo</string>
+    <string name="tile_cool">Dingin</string>
+    <string name="tile_mini_hud">Mini HUD</string>
+    <string name="tile_pause_charging">Jeda pengisian</string>
+    <string name="sound_normal">Suara</string>
+    <string name="sound_vibrate">Getar</string>
+    <string name="sound_silent">Senyap</string>
+
+    <!-- Monitoring, HUD, peringatan -->
+    <string name="panel_sys_stats">CPU %1$s  |  GPU %2$s  |  %3$s  |  RAM %4$s</string>
+    <string name="section_monitoring">Monitoring</string>
+    <string name="ping_server_title">Server ping</string>
+    <string name="ping_cloudflare">Cloudflare (1.1.1.1)</string>
+    <string name="ping_google">Google (8.8.8.8)</string>
+    <string name="ping_quad9">Quad9 (9.9.9.9)</string>
+    <string name="hud_title">Mini HUD</string>
+    <string name="hud_summary">Overlay mengambang berisi FPS, ping, CPU, suhu, dan RAM. Sentuhan tembus ke game.</string>
+    <string name="hud_position_title">Posisi HUD</string>
+    <string name="hud_pos_top_left">Kiri atas</string>
+    <string name="hud_pos_top_right">Kanan atas</string>
+    <string name="hud_pos_bottom_left">Kiri bawah</string>
+    <string name="hud_pos_bottom_right">Kanan bawah</string>
+    <string name="hud_field_fps">HUD: tampilkan FPS</string>
+    <string name="hud_field_ping">HUD: tampilkan ping</string>
+    <string name="hud_field_cpu">HUD: tampilkan beban CPU</string>
+    <string name="hud_field_temp">HUD: tampilkan suhu</string>
+    <string name="hud_field_ram">HUD: tampilkan RAM</string>
+    <string name="hud_opacity_title">Opasitas HUD</string>
+    <string name="section_alerts">Peringatan</string>
+    <string name="alert_off">Mati</string>
+    <string name="alert_temp_title">Peringatan suhu tinggi</string>
+    <string name="alert_temp_value">Pada %1$d°C</string>
+    <string name="alert_battery_title">Peringatan baterai rendah</string>
+    <string name="alert_battery_value">Pada %1$d%%</string>
+    <string name="alert_temp_message">Perangkat panas (%1$d°C). Coba mode Dingin atau istirahat sebentar.</string>
+    <string name="alert_battery_message">Baterai rendah (%1$d%%). Colok charger.</string>
+    <string name="profile_dnd_title">Jangan ganggu</string>
+    <string name="profile_turbo_title">Mode Turbo saat mulai</string>
+
+    <!-- Dukungan game -->
+    <string name="fps_low_net">1%% low %1$d  |  %2$s ±%3$s  |  loss %4$s</string>
+    <string name="net_good">BAGUS</string>
+    <string name="net_fair">SEDANG</string>
+    <string name="net_poor">BURUK</string>
+    <string name="lag_spike_message">Lag mendadak: %1$d ms (%2$s)</string>
+    <string name="auto_cool_on">Auto Cool hidup (%1$d°C)</string>
+    <string name="auto_cool_off">Auto Cool mati (%1$d°C)</string>
+    <string name="match_cue_message">Waktu match %1$s</string>
+    <string name="tile_match_reset">Match baru</string>
+
+    <string name="section_game_support">Dukungan game</string>
+    <string name="genre_presets_title">Preset genre</string>
+    <string name="genre_presets_summary">Terapkan pengaturan otomatis sesuai genre game (MOBA, Shooter, Battle Royale, Racing, RPG). Pengaturan yang kamu pilih sendiri selalu diutamakan.</string>
+    <string name="lag_alert_title">Peringatan lag mendadak</string>
+    <string name="lag_alert_summary">Beri tahu saat latensi jaringan tiba-tiba melonjak. Genre seperti MOBA dan Shooter mengaktifkannya otomatis.</string>
+    <string name="auto_cool_title">Auto Cool</string>
+    <string name="match_cue_title">Penanda waktu match</string>
+    <string name="match_cue_option">Setiap %1$d menit</string>
+    <string name="timer_title">Durasi timer %1$d</string>
+    <string name="timer_seconds_option">%1$d dtk</string>
+
+    <string name="hud_content_title">Isi HUD</string>
+    <string name="hud_content_genre">Ikuti genre game</string>
+    <string name="hud_content_custom">Kustom</string>
+    <string name="hud_field_gpu">HUD: tampilkan beban GPU</string>
+    <string name="hud_field_net">HUD: tampilkan kualitas jaringan</string>
+    <string name="hud_field_power">HUD: tampilkan daya terpakai</string>
+    <string name="hud_field_match">HUD: tampilkan timer match</string>
+    <string name="hud_field_timers">HUD: tampilkan timer hitung mundur</string>
+
+    <string name="genre_title">Genre game</string>
+    <string name="genre_auto_fmt">Otomatis (%1$s)</string>
+    <string name="genre_general">Umum</string>
+    <string name="genre_moba">MOBA</string>
+    <string name="genre_shooter">Shooter</string>
+    <string name="genre_br">Battle Royale</string>
+    <string name="genre_racing">Balap</string>
+    <string name="genre_rpg">RPG</string>
+    <string name="genre_desc_general">Tanpa perubahan otomatis. Pakai opsi di Pengaturan dan profil di bawah.</string>
+    <string name="genre_desc_moba">Fokus jaringan: peringatan lag, ping dan jitter di HUD, timer match dan hitung mundur, bersihkan RAM, dan Jangan Ganggu.</string>
+    <string name="genre_desc_shooter">Fokus respons: refresh rate tertinggi, Turbo, peringatan lag, touch boost (bila didukung), dan Auto Cool di 46°C.</string>
+    <string name="genre_desc_br">Mode match panjang: seperti Shooter, ditambah timer match dan timer hitung mundur di HUD.</string>
+    <string name="genre_desc_racing">Fokus kehalusan: refresh rate tertinggi, Turbo, monitor CPU/GPU, dan Auto Cool di 46°C.</string>
+    <string name="genre_desc_rpg">Mode sesi panjang: 60 Hz hemat daya, Auto Cool di 44°C, monitor daya, dan pengingat istirahat tiap jam.</string>
+
+    <string name="stat_stability">Stabilitas FPS</string>
+    <string name="stat_avg_ping">Ping rata-rata</string>
+    <string name="stat_lag_spikes">Lag mendadak</string>
 </resources>

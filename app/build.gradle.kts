@@ -122,7 +122,9 @@ val symbolNames = listOf(
     "manage_accounts", "menu_book", "mic", "nfc", "nights_stay", "notifications_active", "notifications",
     "opacity", "palette", "phone_android", "phone_in_talk", "photo_camera", "screen_rotation_up",
     "screenshot", "search", "settings", "speed", "sports_esports", "sync", "touch_app", "usb",
-    "videocam", "view_in_ar", "visibility", "volume_up", "vpn_key", "wifi", "wifi_tethering", "work"
+    "videocam", "view_in_ar", "visibility", "volume_up", "vpn_key", "wifi", "wifi_tethering", "work",
+    "animation", "my_location", "vibration", "volume_off", "bolt", "ac_unit", "clear_all",
+    "timer", "restart_alt"
 )
 
 val generateSymbols by tasks.registering {

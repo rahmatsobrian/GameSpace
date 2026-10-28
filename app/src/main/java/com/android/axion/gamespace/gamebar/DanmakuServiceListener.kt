@@ -34,6 +34,7 @@ class DanmakuServiceListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        instance = this
         getActiveNotifications()?.forEach { sbn ->
             if (sbn.isClearable && !sbn.isOngoing) {
                 val danmakuText = extractDanmakuText(sbn)
@@ -42,6 +43,11 @@ class DanmakuServiceListener : NotificationListenerService() {
                 }
             }
         }
+    }
+
+    override fun onListenerDisconnected() {
+        instance = null
+        super.onListenerDisconnected()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -97,6 +103,7 @@ class DanmakuServiceListener : NotificationListenerService() {
 
     companion object {
         @Volatile var host: DanmakuServiceInterface? = null
+        @Volatile var instance: DanmakuServiceListener? = null
         private const val NOTIFICATIONS_MAX_CACHED = 99
     }
 }

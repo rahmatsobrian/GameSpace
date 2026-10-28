@@ -524,6 +524,38 @@ private fun GameDetailsPanel(
                 }
                 val globalLabel = stringResource(R.string.profile_use_global)
 
+                val genreDetected = com.android.axion.gamespace.data.GenreRegistry.detect(game.packageName)
+                var genreSel by remember(game.packageName) {
+                    mutableStateOf(
+                        com.android.axion.gamespace.data.GenreRegistry.override(extrasContext, game.packageName)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                HubSectionLabel(stringResource(R.string.genre_title))
+                HubSelector(
+                    options = listOf(
+                        -1 to stringResource(R.string.genre_auto_fmt, genreLabel(genreDetected)),
+                        0 to genreLabel(com.android.axion.gamespace.data.Genre.GENERAL),
+                        1 to genreLabel(com.android.axion.gamespace.data.Genre.MOBA),
+                        2 to genreLabel(com.android.axion.gamespace.data.Genre.SHOOTER),
+                        3 to genreLabel(com.android.axion.gamespace.data.Genre.BATTLE_ROYALE),
+                        4 to genreLabel(com.android.axion.gamespace.data.Genre.RACING),
+                        5 to genreLabel(com.android.axion.gamespace.data.Genre.RPG),
+                    ),
+                    selectedKey = genreSel,
+                    onSelect = { v ->
+                        com.android.axion.gamespace.data.GenreRegistry.setOverride(extrasContext, game.packageName, v)
+                        genreSel = v
+                    },
+                )
+                Text(
+                    text = genreDescription(
+                        if (genreSel >= 0) com.android.axion.gamespace.data.Genre.fromId(genreSel) else genreDetected
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.5f),
+                )
+
                 Spacer(modifier = Modifier.height(8.dp))
                 HubSectionLabel(stringResource(R.string.profile_section))
 
@@ -562,6 +594,34 @@ private fun GameDetailsPanel(
                     onSelect = { v ->
                         com.android.axion.gamespace.data.GameProfiles.setBrightness(extrasContext, game.packageName, v)
                         profile = profile.copy(brightness = v)
+                    },
+                )
+
+                HubSectionLabel(stringResource(R.string.profile_dnd_title))
+                HubSelector(
+                    options = listOf(
+                        -1 to globalLabel,
+                        1 to stringResource(R.string.profile_on),
+                        0 to stringResource(R.string.profile_off),
+                    ),
+                    selectedKey = profile.dnd,
+                    onSelect = { v ->
+                        com.android.axion.gamespace.data.GameProfiles.setDnd(extrasContext, game.packageName, v)
+                        profile = profile.copy(dnd = v)
+                    },
+                )
+
+                HubSectionLabel(stringResource(R.string.profile_turbo_title))
+                HubSelector(
+                    options = listOf(
+                        -1 to globalLabel,
+                        1 to stringResource(R.string.profile_on),
+                        0 to stringResource(R.string.profile_off),
+                    ),
+                    selectedKey = profile.turbo,
+                    onSelect = { v ->
+                        com.android.axion.gamespace.data.GameProfiles.setTurbo(extrasContext, game.packageName, v)
+                        profile = profile.copy(turbo = v)
                     },
                 )
 
@@ -886,6 +946,30 @@ private fun HubSectionLabel(text: String) {
 }
 
 @Composable
+private fun genreLabel(g: com.android.axion.gamespace.data.Genre): String = stringResource(
+    when (g) {
+        com.android.axion.gamespace.data.Genre.GENERAL -> R.string.genre_general
+        com.android.axion.gamespace.data.Genre.MOBA -> R.string.genre_moba
+        com.android.axion.gamespace.data.Genre.SHOOTER -> R.string.genre_shooter
+        com.android.axion.gamespace.data.Genre.BATTLE_ROYALE -> R.string.genre_br
+        com.android.axion.gamespace.data.Genre.RACING -> R.string.genre_racing
+        com.android.axion.gamespace.data.Genre.RPG -> R.string.genre_rpg
+    }
+)
+
+@Composable
+private fun genreDescription(g: com.android.axion.gamespace.data.Genre): String = stringResource(
+    when (g) {
+        com.android.axion.gamespace.data.Genre.GENERAL -> R.string.genre_desc_general
+        com.android.axion.gamespace.data.Genre.MOBA -> R.string.genre_desc_moba
+        com.android.axion.gamespace.data.Genre.SHOOTER -> R.string.genre_desc_shooter
+        com.android.axion.gamespace.data.Genre.BATTLE_ROYALE -> R.string.genre_desc_br
+        com.android.axion.gamespace.data.Genre.RACING -> R.string.genre_desc_racing
+        com.android.axion.gamespace.data.Genre.RPG -> R.string.genre_desc_rpg
+    }
+)
+
+@Composable
 private fun HubStatRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -937,6 +1021,15 @@ private fun HubPlayStats(summary: com.android.axion.gamespace.data.SessionHistor
             if (summary.avgFps > 0) {
                 HubStatRow(stringResource(R.string.stat_avg_fps), summary.avgFps.toString())
                 HubStatRow(stringResource(R.string.stat_low1), summary.low1.toString())
+            }
+            if (summary.stability > 0) {
+                HubStatRow(stringResource(R.string.stat_stability), "${summary.stability}%")
+            }
+            if (summary.avgPing > 0) {
+                HubStatRow(stringResource(R.string.stat_avg_ping), "${summary.avgPing} ms")
+            }
+            if (summary.spikes > 0) {
+                HubStatRow(stringResource(R.string.stat_lag_spikes), summary.spikes.toString())
             }
             if (summary.maxTemp > 0) {
                 HubStatRow(stringResource(R.string.stat_max_temp), "${summary.maxTemp}\u00B0C")

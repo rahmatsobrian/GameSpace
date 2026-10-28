@@ -465,6 +465,210 @@ fun SettingsScreen(
             }
 
             item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = stringResource(R.string.section_monitoring)) {
+                    val hf = com.android.axion.gamespace.gamebar.HudFields
+                    val pingOptions = listOf(
+                        "0" to stringResource(R.string.ping_cloudflare),
+                        "1" to stringResource(R.string.ping_google),
+                        "2" to stringResource(R.string.ping_quad9),
+                    )
+                    val positionOptions = listOf(
+                        "0" to stringResource(R.string.hud_pos_top_left),
+                        "1" to stringResource(R.string.hud_pos_top_right),
+                        "2" to stringResource(R.string.hud_pos_bottom_left),
+                        "3" to stringResource(R.string.hud_pos_bottom_right),
+                    )
+
+                    SettingsDropdown(
+                        title = stringResource(R.string.ping_server_title),
+                        selectedValue = viewModel.pingTarget.toString(),
+                        options = pingOptions,
+                        onValueChange = { viewModel.updatePingTarget(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_wifi_rounded_filled)
+                    )
+
+                    SettingsSwitch(
+                        title = stringResource(R.string.hud_title),
+                        summary = stringResource(R.string.hud_summary),
+                        checked = viewModel.hudEnabled,
+                        onCheckedChange = { viewModel.updateHudEnabled(it) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_bar_chart_rounded_filled)
+                    )
+
+                    if (viewModel.hudEnabled) {
+                        SettingsDropdown(
+                            title = stringResource(R.string.hud_position_title),
+                            selectedValue = viewModel.hudPosition.toString(),
+                            options = positionOptions,
+                            onValueChange = { viewModel.updateHudPosition(it.toIntOrNull() ?: 0) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_dashboard_rounded_filled)
+                        )
+                        SettingsDropdown(
+                            title = stringResource(R.string.hud_content_title),
+                            selectedValue = viewModel.hudFieldsMode.toString(),
+                            options = listOf(
+                                "1" to stringResource(R.string.hud_content_genre),
+                                "0" to stringResource(R.string.hud_content_custom),
+                            ),
+                            onValueChange = { viewModel.updateHudFieldsMode(it.toIntOrNull() ?: 1) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_bar_chart_rounded_filled)
+                        )
+                        if (viewModel.hudFieldsMode == 0) {
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_fps),
+                            checked = viewModel.hudFields and hf.FPS != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.FPS, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_speed_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_ping),
+                            checked = viewModel.hudFields and hf.PING != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.PING, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_wifi_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_cpu),
+                            checked = viewModel.hudFields and hf.CPU != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.CPU, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_dashboard_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_temp),
+                            checked = viewModel.hudFields and hf.TEMP != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.TEMP, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_device_thermostat_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_ram),
+                            checked = viewModel.hudFields and hf.RAM != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.RAM, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_phone_android_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_gpu),
+                            checked = viewModel.hudFields and hf.GPU != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.GPU, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_dashboard_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_net),
+                            checked = viewModel.hudFields and hf.NET != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.NET, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_wifi_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_power),
+                            checked = viewModel.hudFields and hf.POWER != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.POWER, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_battery_charging_full_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_match),
+                            checked = viewModel.hudFields and hf.MATCH != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.MATCH, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_timer_rounded_filled)
+                        )
+                        SettingsSwitch(
+                            title = stringResource(R.string.hud_field_timers),
+                            checked = viewModel.hudFields and hf.TIMERS != 0,
+                            onCheckedChange = { viewModel.updateHudField(hf.TIMERS, it) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_timer_rounded_filled)
+                        )
+                        }
+                        SettingsSlider(
+                            title = stringResource(R.string.hud_opacity_title),
+                            value = viewModel.hudOpacity,
+                            onValueChange = { viewModel.updateHudOpacity(it) },
+                            valueRange = 30f..100f,
+                            steps = 6,
+                            valueLabel = "${viewModel.hudOpacity.toInt()}%",
+                            icon = painterResource(R.drawable.materialsymbols_ic_opacity_rounded_filled)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = stringResource(R.string.section_alerts)) {
+                    val alertOff = stringResource(R.string.alert_off)
+                    val tempOptions = listOf("0" to alertOff) + listOf(40, 42, 45, 48).map {
+                        it.toString() to stringResource(R.string.alert_temp_value, it)
+                    }
+                    val batteryOptions = listOf("0" to alertOff) + listOf(10, 15, 20).map {
+                        it.toString() to stringResource(R.string.alert_battery_value, it)
+                    }
+                    SettingsDropdown(
+                        title = stringResource(R.string.alert_temp_title),
+                        selectedValue = viewModel.alertTemp.toString(),
+                        options = tempOptions,
+                        onValueChange = { viewModel.updateAlertTemp(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_device_thermostat_rounded_filled)
+                    )
+                    SettingsDropdown(
+                        title = stringResource(R.string.alert_battery_title),
+                        selectedValue = viewModel.alertBattery.toString(),
+                        options = batteryOptions,
+                        onValueChange = { viewModel.updateAlertBattery(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_battery_android_1_rounded_filled)
+                    )
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SettingsSection(title = stringResource(R.string.section_game_support)) {
+                    val offLabel = stringResource(R.string.alert_off)
+                    val coolOptions = listOf("0" to offLabel) + listOf(42, 44, 46, 48).map {
+                        it.toString() to stringResource(R.string.alert_temp_value, it)
+                    }
+                    val cueOptions = listOf("0" to offLabel) + listOf(2, 3, 5, 10).map {
+                        it.toString() to stringResource(R.string.match_cue_option, it)
+                    }
+                    val timerOptions = listOf("0" to offLabel) + listOf(15, 30, 45, 60, 90, 120, 180, 300, 480).map {
+                        it.toString() to stringResource(R.string.timer_seconds_option, it)
+                    }
+
+                    SettingsSwitch(
+                        title = stringResource(R.string.genre_presets_title),
+                        summary = stringResource(R.string.genre_presets_summary),
+                        checked = viewModel.genrePresetsEnabled,
+                        onCheckedChange = { viewModel.updateGenrePresets(it) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_sports_esports_rounded_filled)
+                    )
+                    SettingsSwitch(
+                        title = stringResource(R.string.lag_alert_title),
+                        summary = stringResource(R.string.lag_alert_summary),
+                        checked = viewModel.lagAlertEnabled,
+                        onCheckedChange = { viewModel.updateLagAlert(it) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_wifi_rounded_filled)
+                    )
+                    SettingsDropdown(
+                        title = stringResource(R.string.auto_cool_title),
+                        selectedValue = viewModel.autoCoolTemp.toString(),
+                        options = coolOptions,
+                        onValueChange = { viewModel.updateAutoCool(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_device_thermostat_rounded_filled)
+                    )
+                    SettingsDropdown(
+                        title = stringResource(R.string.match_cue_title),
+                        selectedValue = viewModel.matchCueMinutes.toString(),
+                        options = cueOptions,
+                        onValueChange = { viewModel.updateMatchCue(it.toIntOrNull() ?: 0) },
+                        icon = painterResource(R.drawable.materialsymbols_ic_timer_rounded_filled)
+                    )
+                    for (index in 0..2) {
+                        SettingsDropdown(
+                            title = stringResource(R.string.timer_title, index + 1),
+                            selectedValue = viewModel.timers[index].toString(),
+                            options = timerOptions,
+                            onValueChange = { viewModel.updateTimer(index, it.toIntOrNull() ?: 0) },
+                            icon = painterResource(R.drawable.materialsymbols_ic_timer_rounded_filled)
+                        )
+                    }
+                }
+            }
+
+            item {
                 if (viewModel.isBypassSupported) {
                     Spacer(modifier = Modifier.height(16.dp))
                     SettingsSection(title = "Power") {

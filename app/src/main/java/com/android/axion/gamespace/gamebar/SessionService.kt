@@ -37,9 +37,15 @@ import com.android.axion.gamespace.compat.ChargeLimiter
 import com.android.axion.gamespace.compat.FpsSource
 import com.android.axion.gamespace.compat.MemoryBooster
 import com.android.axion.gamespace.compat.RefreshRate
+import com.android.axion.gamespace.compat.GameTimers
+import com.android.axion.gamespace.compat.HwNodes
+import com.android.axion.gamespace.compat.PerfModes
+import com.android.axion.gamespace.compat.PingMonitor
 import com.android.axion.gamespace.compat.SessionClock
+import com.android.axion.gamespace.compat.SystemStats
 import com.android.axion.gamespace.compat.Sys
 import com.android.axion.gamespace.data.GameProfiles
+import com.android.axion.gamespace.data.SessionPolicy
 import com.android.axion.gamespace.shell.Shell
 import com.android.axion.gamespace.compat.StayAwake
 import com.android.axion.gamespace.data.AppSettings
@@ -75,10 +81,35 @@ class SessionService : Hilt_SessionService() {
     private val recorder by lazy { SessionRecorder(this) }
     private var origBrightness: Int? = null
     private var refreshApplied = false
+    private val hud by lazy { MiniHud(this, appSettings) }
+    private val alerts by lazy { AlertMonitor(this, appSettings) }
+    private var dndApplied = false
+    private var dndSaved = 0
+    private var effBreakMinutes = 0
+    private var effCueMinutes = 0
+    private var touchBoostApplied = false
+
+    private val cueRunnable = object : Runnable {
+        override fun run() {
+            if (effCueMinutes <= 0 || currentPackage == null) return
+            try {
+                android.widget.Toast.makeText(
+                    this@SessionService,
+                    getString(com.android.axion.gamespace.R.string.match_cue_message, GameTimers.matchText()),
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                getSystemService(android.os.Vibrator::class.java)?.vibrate(
+                    android.os.VibrationEffect.createOneShot(200, android.os.VibrationEffect.DEFAULT_AMPLITUDE)
+                )
+            } catch (_: Exception) {
+            }
+            breakHandler.postDelayed(this, effCueMinutes * 60_000L)
+        }
+    }
 
     private val breakRunnable = object : Runnable {
         override fun run() {
-            val minutes = appSettings.breakReminderMinutes
+            val minutes = effBreakMinutes
             if (minutes <= 0 || currentPackage == null) return
             try {
                 android.widget.Toast.makeText(
@@ -253,24 +284,51 @@ class SessionService : Hilt_SessionService() {
         safe("extras") { startExtras(packageName) }
     }
 
-    /** Fitur tambahan per sesi: profil game, refresh rate, auto-RAM, batas pengisian, pengingat istirahat, statistik. */
+    /** Fitur per sesi: preset genre, profil game, jaringan, timer, Auto Cool, HUD, dan statistik. */
     private fun startExtras(pkg: String) {
-        SessionClock.begin()
-        recorder.start(pkg, appSettings.fpsGraphEnabled || appSettings.showFps)
-
+        val policy = SessionPolicy.resolve(this, pkg, appSettings)
         val profile = GameProfiles.get(this, pkg)
 
-        val hz = if (profile.refreshRate >= 0) profile.refreshRate else appSettings.refreshRateLock
-        if (hz > 0) {
-            RefreshRate.apply(this, hz)
+        SessionClock.begin()
+        GameTimers.beginMatch()
+        recorder.start(pkg, appSettings.fpsGraphEnabled || appSettings.showFps)
+
+        PerfModes.currentPackage = pkg
+        SystemStats.start(this)
+        PingMonitor.preferred = appSettings.pingTarget
+        PingMonitor.start()
+        if (policy.lagAlert) {
+            PingMonitor.onLagSpike = { ms -> alerts.notifyLag(ms) }
+        }
+        alerts.autoCoolTemp = policy.autoCoolTemp
+        alerts.start()
+
+        HudBus.handler = { on ->
+            if (on) hud.show(pkg) else hud.hide()
+        }
+        hud.fieldsOverride = policy.hudFields
+        if (appSettings.hudEnabled) hud.show(pkg)
+
+        if (policy.refreshHz > 0) {
+            RefreshRate.apply(this, policy.refreshHz)
             refreshApplied = true
         }
-
-        val autoRam = if (profile.autoRam >= 0) profile.autoRam == 1 else appSettings.autoBoostMemory
-        if (autoRam) {
+        if (policy.autoRam) {
             Shell.background {
                 try { MemoryBooster.release(this@SessionService) } catch (_: Exception) {}
             }
+        }
+        if (policy.dnd) {
+            dndSaved = try {
+                android.provider.Settings.Global.getInt(contentResolver, "zen_mode", 0)
+            } catch (_: Exception) { 0 }
+            Shell.run("cmd notification set_dnd on")
+            dndApplied = true
+        }
+        if (policy.turbo) PerfModes.setTurbo(this, true)
+        if (policy.touchBoost && HwNodes.isSupported(this, HwNodes.Kind.TOUCH)) {
+            HwNodes.set(this, HwNodes.Kind.TOUCH, true)
+            touchBoostApplied = true
         }
 
         if (profile.brightness > 0) {
@@ -286,12 +344,35 @@ class SessionService : Hilt_SessionService() {
 
         chargeLimiter.start()
 
-        val minutes = appSettings.breakReminderMinutes
-        if (minutes > 0) breakHandler.postDelayed(breakRunnable, minutes * 60_000L)
+        effBreakMinutes = policy.breakMinutes
+        if (effBreakMinutes > 0) breakHandler.postDelayed(breakRunnable, effBreakMinutes * 60_000L)
+        effCueMinutes = policy.matchCueMinutes
+        if (effCueMinutes > 0) breakHandler.postDelayed(cueRunnable, effCueMinutes * 60_000L)
     }
 
     private fun stopExtras() {
         breakHandler.removeCallbacks(breakRunnable)
+        breakHandler.removeCallbacks(cueRunnable)
+        HudBus.handler = null
+        hud.hide()
+        alerts.stop()
+        PerfModes.reset(this)
+        PerfModes.currentPackage = null
+
+        recorder.finish() // sebelum PingMonitor.stop() agar jumlah lonjakan lag terbaca
+        PingMonitor.onLagSpike = null
+        PingMonitor.stop()
+        SystemStats.stop()
+        GameTimers.endSession()
+
+        if (dndApplied) {
+            if (dndSaved == 0) Shell.run("cmd notification set_dnd off")
+            dndApplied = false
+        }
+        if (touchBoostApplied) {
+            HwNodes.set(this, HwNodes.Kind.TOUCH, false)
+            touchBoostApplied = false
+        }
         chargeLimiter.stop()
         origBrightness?.let {
             Sys.putSystem(this, android.provider.Settings.System.SCREEN_BRIGHTNESS, it.toString())
@@ -301,7 +382,6 @@ class SessionService : Hilt_SessionService() {
             RefreshRate.apply(this, 0)
             refreshApplied = false
         }
-        recorder.finish()
         SessionClock.end()
     }
 

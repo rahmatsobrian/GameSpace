@@ -39,3 +39,23 @@ Perubahan dari versi asli dan keterbatasannya ada di balasan yang menyertai file
 - Profil per-game: refresh rate, auto-RAM, kecerahan awal.
 - Timer sesi di header panel dan pengingat istirahat (Settings > Performance).
 Crosshair kustom (gaya, warna, ukuran, opasitas, posisi) sudah ada di aplikasi asli.
+
+## Fitur gaming tambahan (batch 2)
+- 12 tile baru di sidebar: Show touches, Pointer location, Fast animations, Touch haptics, Mute media, Sound mode, Clear notifications, Turbo, Cool, Mini HUD, Pause charging, Refresh rate.
+- Mini HUD mengambang (FPS, ping, CPU, suhu, RAM) dengan posisi dan isi yang bisa diatur.
+- Baris CPU/suhu/RAM di kartu FPS panel; pilihan server ping.
+- Peringatan suhu tinggi dan baterai rendah.
+- Profil per-game: tambahan Do Not Disturb dan Turbo mode otomatis.
+- Tile baru otomatis muncul sekali untuk pengguna lama.
+
+## Dukungan per genre game (batch 3)
+- Genre per game (Auto / Umum / MOBA / Shooter / Battle Royale / Racing / RPG) dipilih di layar detail Hub.
+  Auto memakai daftar bawaan nama paket game populer yang terbatas; game lain dianggap Umum.
+- Preset genre hanya mengisi default (refresh rate, Turbo, DND, RAM, Auto Cool, peringatan lag, isi HUD).
+  Prioritas: profil per-game > pengaturan global > preset genre.
+- Kualitas jaringan: ping, jitter, packet loss, penilaian GOOD/FAIR/POOR, peringatan lonjakan lag, info Wi-Fi/seluler.
+- Monitor lengkap: CPU (beban, frekuensi), GPU, suhu, RAM, daya baterai.
+- Timer match + 3 timer hitung mundur yang bisa diatur, penanda waktu match berkala.
+- Auto Cool: mode Cool otomatis saat suhu mencapai ambang, kembali normal setelah turun 4 derajat.
+- Statistik sesi diperluas: stabilitas FPS, ping rata-rata, jumlah lag mendadak.
+Tidak ada fitur yang mengotomatiskan input atau membaca isi game (auto-aim, macro, ESP), karena itu curang dan berisiko banned.

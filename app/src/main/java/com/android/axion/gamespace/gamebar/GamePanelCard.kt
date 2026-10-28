@@ -1036,6 +1036,8 @@ fun FpsGraph(
     val maxFps by interactor.dynamicMaxFps.collectAsState()
     val low1 by interactor.low1Percent.collectAsState()
     val ping by com.android.axion.gamespace.compat.PingMonitor.ping.collectAsState()
+    val sys by com.android.axion.gamespace.compat.SystemStats.stats.collectAsState()
+    val net by com.android.axion.gamespace.compat.PingMonitor.net.collectAsState()
     
     val graphData = remember(fpsHistory, maxFps) {
         if (fpsHistory.isNotEmpty()) {
@@ -1149,9 +1151,22 @@ fun FpsGraph(
                 )
                 Text(
                     text = stringResource(
-                        R.string.fps_low_ping,
+                        R.string.fps_low_net,
                         low1.toInt(),
-                        if (ping >= 0) "$ping ms" else "-"
+                        if (ping >= 0) "$ping ms" else "-",
+                        if (net.jitter >= 0) "${net.jitter}" else "-",
+                        "${net.loss}%"
+                    ),
+                    color = graphData.third,
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
+                Text(
+                    text = stringResource(
+                        R.string.panel_sys_stats,
+                        if (sys.cpuPercent >= 0) "${sys.cpuPercent}%" else "-",
+                        if (sys.gpuPercent >= 0) "${sys.gpuPercent}%" else "-",
+                        if (sys.cpuTempC >= 0) "${sys.cpuTempC}°C" else "-",
+                        if (sys.ramPercent >= 0) "${sys.ramPercent}%" else "-"
                     ),
                     color = graphData.third,
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)

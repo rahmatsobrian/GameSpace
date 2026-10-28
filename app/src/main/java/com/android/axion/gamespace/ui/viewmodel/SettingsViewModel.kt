@@ -304,4 +304,123 @@ class SettingsViewModel @Inject constructor(
         chargeLimit = percent
         appSettings.chargeLimit = percent.toInt()
     }
+
+    // ---- Monitoring, HUD, peringatan ----
+    var pingTarget by mutableIntStateOf(appSettings.pingTarget)
+        private set
+
+    fun updatePingTarget(index: Int) {
+        pingTarget = index
+        appSettings.pingTarget = index
+        com.android.axion.gamespace.compat.PingMonitor.preferred = index
+    }
+
+    var hudEnabled by mutableStateOf(appSettings.hudEnabled)
+        private set
+
+    var hudPosition by mutableIntStateOf(appSettings.hudPosition)
+        private set
+
+    var hudFields by mutableIntStateOf(appSettings.hudFields)
+        private set
+
+    var hudOpacity by mutableFloatStateOf(appSettings.hudOpacity.toFloat())
+        private set
+
+    private fun refreshHud() {
+        val h = com.android.axion.gamespace.gamebar.HudBus.handler ?: return
+        if (hudEnabled) {
+            h(false)
+            h(true)
+        }
+    }
+
+    fun updateHudEnabled(enabled: Boolean) {
+        hudEnabled = enabled
+        appSettings.hudEnabled = enabled
+        com.android.axion.gamespace.gamebar.HudBus.handler?.invoke(enabled)
+    }
+
+    fun updateHudPosition(position: Int) {
+        hudPosition = position
+        appSettings.hudPosition = position
+        refreshHud()
+    }
+
+    fun updateHudField(bit: Int, on: Boolean) {
+        hudFields = if (on) hudFields or bit else hudFields and bit.inv()
+        appSettings.hudFields = hudFields
+        refreshHud()
+    }
+
+    fun updateHudOpacity(percent: Float) {
+        hudOpacity = percent
+        appSettings.hudOpacity = percent.toInt()
+    }
+
+    var alertTemp by mutableIntStateOf(appSettings.alertTemp)
+        private set
+
+    fun updateAlertTemp(celsius: Int) {
+        alertTemp = celsius
+        appSettings.alertTemp = celsius
+    }
+
+    var alertBattery by mutableIntStateOf(appSettings.alertBattery)
+        private set
+
+    fun updateAlertBattery(percent: Int) {
+        alertBattery = percent
+        appSettings.alertBattery = percent
+    }
+
+    // ---- Dukungan game: preset genre, lag, Auto Cool, timer ----
+    var genrePresetsEnabled by mutableStateOf(appSettings.genrePresetsEnabled)
+        private set
+
+    fun updateGenrePresets(enabled: Boolean) {
+        genrePresetsEnabled = enabled
+        appSettings.genrePresetsEnabled = enabled
+    }
+
+    var lagAlertEnabled by mutableStateOf(appSettings.lagAlertEnabled)
+        private set
+
+    fun updateLagAlert(enabled: Boolean) {
+        lagAlertEnabled = enabled
+        appSettings.lagAlertEnabled = enabled
+    }
+
+    var autoCoolTemp by mutableIntStateOf(appSettings.autoCoolTemp)
+        private set
+
+    fun updateAutoCool(celsius: Int) {
+        autoCoolTemp = celsius
+        appSettings.autoCoolTemp = celsius
+    }
+
+    var matchCueMinutes by mutableIntStateOf(appSettings.matchCueMinutes)
+        private set
+
+    fun updateMatchCue(minutes: Int) {
+        matchCueMinutes = minutes
+        appSettings.matchCueMinutes = minutes
+    }
+
+    var hudFieldsMode by mutableIntStateOf(appSettings.hudFieldsMode)
+        private set
+
+    fun updateHudFieldsMode(mode: Int) {
+        hudFieldsMode = mode
+        appSettings.hudFieldsMode = mode
+    }
+
+    val timers = androidx.compose.runtime.mutableStateListOf(
+        appSettings.timerSeconds(0), appSettings.timerSeconds(1), appSettings.timerSeconds(2)
+    )
+
+    fun updateTimer(index: Int, seconds: Int) {
+        timers[index] = seconds
+        appSettings.setTimerSeconds(index, seconds)
+    }
 }

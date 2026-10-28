@@ -37,4 +37,100 @@
     <string name="stat_battery_used">Battery used (last session)</string>
     <string name="stat_duration_hm">%1$dh %2$dm</string>
     <string name="stat_duration_m">%1$dm</string>
+
+    <!-- Tile baru -->
+    <string name="tile_show_touches">Show touches</string>
+    <string name="tile_pointer_location">Pointer location</string>
+    <string name="tile_fast_animations">Fast animations</string>
+    <string name="tile_haptics">Touch haptics</string>
+    <string name="tile_mute">Mute media</string>
+    <string name="tile_clear_notifications">Clear notifications</string>
+    <string name="tile_turbo">Turbo</string>
+    <string name="tile_cool">Cool</string>
+    <string name="tile_mini_hud">Mini HUD</string>
+    <string name="tile_pause_charging">Pause charging</string>
+    <string name="sound_normal">Sound</string>
+    <string name="sound_vibrate">Vibrate</string>
+    <string name="sound_silent">Silent</string>
+
+    <!-- Monitoring, HUD, peringatan -->
+    <string name="panel_sys_stats">CPU %1$s  |  GPU %2$s  |  %3$s  |  RAM %4$s</string>
+    <string name="section_monitoring">Monitoring</string>
+    <string name="ping_server_title">Ping server</string>
+    <string name="ping_cloudflare">Cloudflare (1.1.1.1)</string>
+    <string name="ping_google">Google (8.8.8.8)</string>
+    <string name="ping_quad9">Quad9 (9.9.9.9)</string>
+    <string name="hud_title">Mini HUD</string>
+    <string name="hud_summary">Floating overlay with FPS, ping, CPU, temperature and RAM. Touches pass through it.</string>
+    <string name="hud_position_title">HUD position</string>
+    <string name="hud_pos_top_left">Top left</string>
+    <string name="hud_pos_top_right">Top right</string>
+    <string name="hud_pos_bottom_left">Bottom left</string>
+    <string name="hud_pos_bottom_right">Bottom right</string>
+    <string name="hud_field_fps">HUD: show FPS</string>
+    <string name="hud_field_ping">HUD: show ping</string>
+    <string name="hud_field_cpu">HUD: show CPU load</string>
+    <string name="hud_field_temp">HUD: show temperature</string>
+    <string name="hud_field_ram">HUD: show RAM</string>
+    <string name="hud_opacity_title">HUD opacity</string>
+    <string name="section_alerts">Alerts</string>
+    <string name="alert_off">Off</string>
+    <string name="alert_temp_title">High temperature alert</string>
+    <string name="alert_temp_value">At %1$d°C</string>
+    <string name="alert_battery_title">Low battery alert</string>
+    <string name="alert_battery_value">At %1$d%%</string>
+    <string name="alert_temp_message">Your device is hot (%1$d°C). Try Cool mode or take a short break.</string>
+    <string name="alert_battery_message">Battery is low (%1$d%%). Plug in your charger.</string>
+    <string name="profile_dnd_title">Do not disturb</string>
+    <string name="profile_turbo_title">Turbo mode on start</string>
+
+    <!-- Dukungan game -->
+    <string name="fps_low_net">1%% low %1$d  |  %2$s ±%3$s  |  loss %4$s</string>
+    <string name="net_good">GOOD</string>
+    <string name="net_fair">FAIR</string>
+    <string name="net_poor">POOR</string>
+    <string name="lag_spike_message">Lag spike: %1$d ms (%2$s)</string>
+    <string name="auto_cool_on">Auto Cool on (%1$d°C)</string>
+    <string name="auto_cool_off">Auto Cool off (%1$d°C)</string>
+    <string name="match_cue_message">Match time %1$s</string>
+    <string name="tile_match_reset">New match</string>
+
+    <string name="section_game_support">Game support</string>
+    <string name="genre_presets_title">Genre presets</string>
+    <string name="genre_presets_summary">Apply automatic settings based on the game genre (MOBA, Shooter, Battle Royale, Racing, RPG). Your own settings always win.</string>
+    <string name="lag_alert_title">Lag spike alert</string>
+    <string name="lag_alert_summary">Notify when network latency suddenly jumps. Genres like MOBA and Shooter enable this automatically.</string>
+    <string name="auto_cool_title">Auto Cool</string>
+    <string name="match_cue_title">Match time cue</string>
+    <string name="match_cue_option">Every %1$d min</string>
+    <string name="timer_title">Timer %1$d duration</string>
+    <string name="timer_seconds_option">%1$d s</string>
+
+    <string name="hud_content_title">HUD content</string>
+    <string name="hud_content_genre">Follow game genre</string>
+    <string name="hud_content_custom">Custom</string>
+    <string name="hud_field_gpu">HUD: show GPU load</string>
+    <string name="hud_field_net">HUD: show network quality</string>
+    <string name="hud_field_power">HUD: show power draw</string>
+    <string name="hud_field_match">HUD: show match timer</string>
+    <string name="hud_field_timers">HUD: show countdown timers</string>
+
+    <string name="genre_title">Game genre</string>
+    <string name="genre_auto_fmt">Auto (%1$s)</string>
+    <string name="genre_general">General</string>
+    <string name="genre_moba">MOBA</string>
+    <string name="genre_shooter">Shooter</string>
+    <string name="genre_br">Battle Royale</string>
+    <string name="genre_racing">Racing</string>
+    <string name="genre_rpg">RPG</string>
+    <string name="genre_desc_general">No automatic changes. Use the options in Settings and the profile below.</string>
+    <string name="genre_desc_moba">Network-focused: lag spike alerts, ping and jitter on the HUD, match and countdown timers, RAM clean and Do Not Disturb.</string>
+    <string name="genre_desc_shooter">Response-focused: highest refresh rate, Turbo, lag alerts, touch boost (if supported) and Auto Cool at 46°C.</string>
+    <string name="genre_desc_br">Long-match mode: like Shooter, plus match timer and countdown timers on the HUD.</string>
+    <string name="genre_desc_racing">Smoothness-focused: highest refresh rate, Turbo, CPU/GPU monitor and Auto Cool at 46°C.</string>
+    <string name="genre_desc_rpg">Long-session mode: 60 Hz to save power, Auto Cool at 44°C, power draw monitor and a break reminder every hour.</string>
+
+    <string name="stat_stability">FPS stability</string>
+    <string name="stat_avg_ping">Average ping</string>
+    <string name="stat_lag_spikes">Lag spikes</string>
 </resources>

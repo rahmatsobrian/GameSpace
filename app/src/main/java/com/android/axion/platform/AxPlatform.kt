@@ -48,6 +48,10 @@ object AxPlatformFeature {
     const val SMART_PIXELS = "smart_pixels"
     const val SCREEN_RECORD = "screen_record"
     const val SCREENSHOT = "screenshot"
+    const val SHOW_TOUCHES = "show_touches"
+    const val POINTER_LOCATION = "pointer_location"
+    const val FAST_ANIMATIONS = "fast_animations"
+    const val HAPTICS = "haptics"
 }
 
 class AxFeatureState(
@@ -112,6 +116,15 @@ class AxPlatformClient private constructor() {
             Feat(AxPlatformFeature.ONE_HANDED_MODE, settingsGet("secure", "one_handed_mode_enabled"), ::nz, "settings put secure one_handed_mode_enabled 1", "settings put secure one_handed_mode_enabled 0"),
             Feat(AxPlatformFeature.HEADS_UP, settingsGet("global", "heads_up_notifications_enabled"), ::nz, "settings put global heads_up_notifications_enabled 1", "settings put global heads_up_notifications_enabled 0"),
             Feat(AxPlatformFeature.DREAM, settingsGet("secure", "screensaver_enabled"), ::nz, "settings put secure screensaver_enabled 1", "settings put secure screensaver_enabled 0"),
+            Feat(AxPlatformFeature.SHOW_TOUCHES, settingsGet("system", "show_touches"), ::nz, "settings put system show_touches 1", "settings put system show_touches 0"),
+            Feat(AxPlatformFeature.POINTER_LOCATION, settingsGet("system", "pointer_location"), ::nz, "settings put system pointer_location 1", "settings put system pointer_location 0"),
+            Feat(
+                AxPlatformFeature.FAST_ANIMATIONS, settingsGet("global", "window_animation_scale"),
+                { it.trim().toFloatOrNull()?.let { v -> v < 1f } == true },
+                "settings put global window_animation_scale 0.5; settings put global transition_animation_scale 0.5; settings put global animator_duration_scale 0.5",
+                "settings put global window_animation_scale 1.0; settings put global transition_animation_scale 1.0; settings put global animator_duration_scale 1.0"
+            ),
+            Feat(AxPlatformFeature.HAPTICS, settingsGet("system", "haptic_feedback_enabled"), ::nz, "settings put system haptic_feedback_enabled 1", "settings put system haptic_feedback_enabled 0"),
             Feat(AxPlatformFeature.SCREEN_RECORD, "pidof screenrecord", { it.trim().isNotEmpty() }),
         )
     }

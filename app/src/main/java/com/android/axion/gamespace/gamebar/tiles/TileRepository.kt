@@ -17,7 +17,11 @@ package com.android.axion.gamespace.gamebar.tiles
 
 import com.android.axion.gamespace.compat.HwNodes
 import com.android.axion.gamespace.compat.MemoryBooster
+import com.android.axion.gamespace.compat.GameTimers
+import com.android.axion.gamespace.compat.PerfModes
 import com.android.axion.gamespace.compat.RefreshRate
+import com.android.axion.gamespace.gamebar.DanmakuServiceListener
+import com.android.axion.gamespace.gamebar.HudBus
 import com.android.axion.gamespace.shell.Shell
 import android.content.Context
 import android.content.Intent
@@ -199,7 +203,17 @@ class TileRepository @Inject constructor(
     private fun loadTileOrder(): List<String> {
         val savedOrder = appSettings.tileOrder
         return if (savedOrder.isNotEmpty()) {
-            savedOrder.filter { id -> defaultTiles.any { it.id == id } }
+            val kept = savedOrder.filter { id -> defaultTiles.any { it.id == id } }.toMutableList()
+            val known = appSettings.knownTileIds
+            val fresh = NEW_TILE_IDS.filter { id ->
+                id !in known && id !in kept && defaultTiles.any { it.id == id }
+            }
+            if (fresh.isNotEmpty()) {
+                kept.addAll(fresh)
+                appSettings.tileOrder = kept
+            }
+            appSettings.knownTileIds = known + NEW_TILE_IDS
+            kept
         } else {
             defaultTiles.map { it.id }
         }
@@ -306,6 +320,127 @@ class TileRepository @Inject constructor(
             add(RefreshRateTile(context))
         }
 
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+        add(
+            SimpleTile(
+                id = "mute_media",
+                icon = R.drawable.materialsymbols_ic_volume_off_rounded_filled,
+                labelProvider = { context.getString(R.string.tile_mute) },
+                stateProvider = { audio.isStreamMute(android.media.AudioManager.STREAM_MUSIC) },
+                onToggle = {
+                    try {
+                        audio.adjustStreamVolume(
+                            android.media.AudioManager.STREAM_MUSIC,
+                            android.media.AudioManager.ADJUST_TOGGLE_MUTE, 0
+                        )
+                    } catch (_: Exception) {}
+                },
+            )
+        )
+        add(
+            SimpleTile(
+                id = "sound_mode",
+                icon = R.drawable.materialsymbols_ic_volume_up_rounded_filled,
+                labelProvider = {
+                    when (audio.ringerMode) {
+                        android.media.AudioManager.RINGER_MODE_VIBRATE -> context.getString(R.string.sound_vibrate)
+                        android.media.AudioManager.RINGER_MODE_SILENT -> context.getString(R.string.sound_silent)
+                        else -> context.getString(R.string.sound_normal)
+                    }
+                },
+                stateProvider = { audio.ringerMode != android.media.AudioManager.RINGER_MODE_NORMAL },
+                onToggle = {
+                    try {
+                        audio.ringerMode = when (audio.ringerMode) {
+                            android.media.AudioManager.RINGER_MODE_NORMAL -> android.media.AudioManager.RINGER_MODE_VIBRATE
+                            android.media.AudioManager.RINGER_MODE_VIBRATE -> android.media.AudioManager.RINGER_MODE_SILENT
+                            else -> android.media.AudioManager.RINGER_MODE_NORMAL
+                        }
+                    } catch (_: SecurityException) {}
+                },
+            )
+        )
+        add(
+            FixedActionTile(
+                id = "clear_notifications",
+                label = context.getString(R.string.tile_clear_notifications),
+                icon = R.drawable.materialsymbols_ic_clear_all_rounded_filled,
+                action = {
+                    try { DanmakuServiceListener.instance?.cancelAllNotifications() } catch (_: Exception) {}
+                },
+            )
+        )
+        add(
+            SimpleTile(
+                id = "turbo_mode",
+                icon = R.drawable.materialsymbols_ic_bolt_rounded_filled,
+                labelProvider = { context.getString(R.string.tile_turbo) },
+                stateProvider = { PerfModes.turboActive.value },
+                onToggle = { PerfModes.setTurbo(context, !PerfModes.turboActive.value) },
+            )
+        )
+        add(
+            SimpleTile(
+                id = "cool_mode",
+                icon = R.drawable.materialsymbols_ic_ac_unit_rounded_filled,
+                labelProvider = { context.getString(R.string.tile_cool) },
+                stateProvider = { PerfModes.coolActive.value },
+                onToggle = { PerfModes.setCool(context, !PerfModes.coolActive.value) },
+            )
+        )
+        add(
+            FixedActionTile(
+                id = "match_reset",
+                label = context.getString(R.string.tile_match_reset),
+                icon = R.drawable.materialsymbols_ic_restart_alt_rounded_filled,
+                action = { GameTimers.beginMatch() },
+            )
+        )
+        for (index in 0..2) {
+            add(
+                SimpleTile(
+                    id = "timer_${index + 1}",
+                    icon = R.drawable.materialsymbols_ic_timer_rounded_filled,
+                    labelProvider = { GameTimers.label(index, appSettings.timerSeconds(index)) },
+                    stateProvider = { GameTimers.tick.intValue >= 0 && GameTimers.isActive(index) },
+                    onToggle = { GameTimers.toggle(context, index, appSettings.timerSeconds(index)) },
+                )
+            )
+        }
+        val hudState = mutableStateOf(appSettings.hudEnabled)
+        add(
+            SimpleTile(
+                id = "mini_hud",
+                icon = R.drawable.materialsymbols_ic_bar_chart_rounded_filled,
+                labelProvider = { context.getString(R.string.tile_mini_hud) },
+                stateProvider = { hudState.value },
+                onToggle = {
+                    val v = !appSettings.hudEnabled
+                    appSettings.hudEnabled = v
+                    hudState.value = v
+                    HudBus.handler?.invoke(v)
+                },
+            )
+        )
+        if (HwNodes.isSupported(context, HwNodes.Kind.CHARGE)) {
+            val chargeState = mutableStateOf(HwNodes.isEnabled(context, HwNodes.Kind.CHARGE))
+            add(
+                SimpleTile(
+                    id = "pause_charging",
+                    icon = R.drawable.materialsymbols_ic_battery_charging_full_rounded_filled,
+                    labelProvider = { context.getString(R.string.tile_pause_charging) },
+                    stateProvider = { chargeState.value },
+                    onToggle = {
+                        val v = !chargeState.value
+                        chargeState.value = v
+                        HwNodes.set(context, HwNodes.Kind.CHARGE, v) { ok ->
+                            if (!ok) mainHandler.post { chargeState.value = !v }
+                        }
+                    },
+                )
+            )
+        }
+
         if (HwNodes.isSupported(context, HwNodes.Kind.TOUCH)) {
             val touchBoostState = mutableStateOf(
                 HwNodes.isEnabled(context, HwNodes.Kind.TOUCH)
@@ -328,6 +463,13 @@ class TileRepository @Inject constructor(
     }
 
     companion object {
+        /** Tile yang ditambahkan belakangan; otomatis dimunculkan sekali untuk pengguna lama. */
+        private val NEW_TILE_IDS = listOf(
+            "refresh_rate", "show_touches", "pointer_location", "fast_animations", "haptics",
+            "mute_media", "sound_mode", "clear_notifications", "turbo_mode", "cool_mode",
+            "mini_hud", "pause_charging", "match_reset", "timer_1", "timer_2", "timer_3",
+        )
+
         private val platformTileSpecs = listOf(
             PlatformTileSpec(
                 AxPlatformFeature.WIFI,
@@ -503,6 +645,26 @@ class TileRepository @Inject constructor(
                 AxPlatformFeature.SCREENSHOT,
                 R.drawable.materialsymbols_ic_screenshot_rounded_filled,
                 R.string.tile_screenshot,
+            ),
+            PlatformTileSpec(
+                AxPlatformFeature.SHOW_TOUCHES,
+                R.drawable.materialsymbols_ic_touch_app_rounded_filled,
+                R.string.tile_show_touches,
+            ),
+            PlatformTileSpec(
+                AxPlatformFeature.POINTER_LOCATION,
+                R.drawable.materialsymbols_ic_my_location_rounded_filled,
+                R.string.tile_pointer_location,
+            ),
+            PlatformTileSpec(
+                AxPlatformFeature.FAST_ANIMATIONS,
+                R.drawable.materialsymbols_ic_animation_rounded_filled,
+                R.string.tile_fast_animations,
+            ),
+            PlatformTileSpec(
+                AxPlatformFeature.HAPTICS,
+                R.drawable.materialsymbols_ic_vibration_rounded_filled,
+                R.string.tile_haptics,
             ),
         )
     }

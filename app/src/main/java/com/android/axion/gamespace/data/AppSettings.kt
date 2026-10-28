@@ -159,6 +159,65 @@ class AppSettings @Inject constructor(private val context: Context) {
         get() = db.getInt(KEY_BREAK_REMINDER, 0)
         set(value) = db.edit().putInt(KEY_BREAK_REMINDER, value).apply()
 
+    var hudEnabled: Boolean
+        get() = db.getBoolean(KEY_HUD_ENABLED, false)
+        set(value) = db.edit().putBoolean(KEY_HUD_ENABLED, value).apply()
+
+    /** 0 kiri-atas, 1 kanan-atas, 2 kiri-bawah, 3 kanan-bawah */
+    var hudPosition: Int
+        get() = db.getInt(KEY_HUD_POSITION, 0)
+        set(value) = db.edit().putInt(KEY_HUD_POSITION, value).apply()
+
+    /** Bit: 1 FPS, 2 ping, 4 CPU, 8 suhu, 16 RAM */
+    var hudFields: Int
+        get() = db.getInt(KEY_HUD_FIELDS, 11)
+        set(value) = db.edit().putInt(KEY_HUD_FIELDS, value).apply()
+
+    var hudOpacity: Int
+        get() = db.getInt(KEY_HUD_OPACITY, 80)
+        set(value) = db.edit().putInt(KEY_HUD_OPACITY, value).apply()
+
+    var alertTemp: Int
+        get() = db.getInt(KEY_ALERT_TEMP, 0)
+        set(value) = db.edit().putInt(KEY_ALERT_TEMP, value).apply()
+
+    var alertBattery: Int
+        get() = db.getInt(KEY_ALERT_BATTERY, 0)
+        set(value) = db.edit().putInt(KEY_ALERT_BATTERY, value).apply()
+
+    var pingTarget: Int
+        get() = db.getInt(KEY_PING_TARGET, 0)
+        set(value) = db.edit().putInt(KEY_PING_TARGET, value).apply()
+
+    var knownTileIds: Set<String>
+        get() = db.getString(KEY_KNOWN_TILES, "")?.split(",")?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+        set(value) = db.edit().putString(KEY_KNOWN_TILES, value.joinToString(",")).apply()
+
+    var genrePresetsEnabled: Boolean
+        get() = db.getBoolean(KEY_GENRE_PRESETS, true)
+        set(value) = db.edit().putBoolean(KEY_GENRE_PRESETS, value).apply()
+
+    var lagAlertEnabled: Boolean
+        get() = db.getBoolean(KEY_LAG_ALERT, false)
+        set(value) = db.edit().putBoolean(KEY_LAG_ALERT, value).apply()
+
+    var autoCoolTemp: Int
+        get() = db.getInt(KEY_AUTO_COOL, 0)
+        set(value) = db.edit().putInt(KEY_AUTO_COOL, value).apply()
+
+    var matchCueMinutes: Int
+        get() = db.getInt(KEY_MATCH_CUE, 0)
+        set(value) = db.edit().putInt(KEY_MATCH_CUE, value).apply()
+
+    /** 0 = isi HUD manual, 1 = ikut genre game. */
+    var hudFieldsMode: Int
+        get() = db.getInt(KEY_HUD_MODE, 1)
+        set(value) = db.edit().putInt(KEY_HUD_MODE, value).apply()
+
+    fun timerSeconds(index: Int): Int = db.getInt("gamespace_timer_$index", intArrayOf(60, 120, 180)[index])
+
+    fun setTimerSeconds(index: Int, seconds: Int) = db.edit().putInt("gamespace_timer_$index", seconds).apply()
+
     var musicPlayerEnabled: Boolean
         get() = db.getBoolean(KEY_MUSIC_PLAYER_ENABLED, true)
         set(value) = db.edit().putBoolean(KEY_MUSIC_PLAYER_ENABLED, value).apply()
@@ -192,5 +251,18 @@ class AppSettings @Inject constructor(private val context: Context) {
         const val KEY_CHARGE_LIMIT_ENABLED = "gamespace_charge_limit_enabled"
         const val KEY_CHARGE_LIMIT = "gamespace_charge_limit"
         const val KEY_BREAK_REMINDER = "gamespace_break_reminder_minutes"
+        const val KEY_HUD_ENABLED = "gamespace_hud_enabled"
+        const val KEY_GENRE_PRESETS = "gamespace_genre_presets"
+        const val KEY_LAG_ALERT = "gamespace_lag_alert"
+        const val KEY_AUTO_COOL = "gamespace_auto_cool_temp"
+        const val KEY_MATCH_CUE = "gamespace_match_cue_minutes"
+        const val KEY_HUD_MODE = "gamespace_hud_fields_mode"
+        const val KEY_HUD_POSITION = "gamespace_hud_position"
+        const val KEY_HUD_FIELDS = "gamespace_hud_fields"
+        const val KEY_HUD_OPACITY = "gamespace_hud_opacity"
+        const val KEY_ALERT_TEMP = "gamespace_alert_temp"
+        const val KEY_ALERT_BATTERY = "gamespace_alert_battery"
+        const val KEY_PING_TARGET = "gamespace_ping_target"
+        const val KEY_KNOWN_TILES = "gamespace_known_tile_ids"
     }
 }
